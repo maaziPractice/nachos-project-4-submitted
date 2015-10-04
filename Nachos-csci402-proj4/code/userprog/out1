@@ -1,0 +1,213 @@
+
+I am in AddrSpace
+
+For Main Thread:Initial Size Code+Int+Uninit = 432
+
+For Main Thread:Initial Value of numPage = 12
+
+For Main Thread:Initial Size Code+Int+Uninit+MainStack = 1536
+
+I am in InitRegisters StackReg For 1520
+
+PID 0, Starting Address of Stack 4294967280-Main Thread
+
+Calling Exec
+
+I am in AddrSpace
+
+For Main Thread:Initial Size Code+Int+Uninit = 1232
+
+For Main Thread:Initial Value of numPage = 18
+
+For Main Thread:Initial Size Code+Int+Uninit+MainStack = 2304
+
+Calling Exec
+
+I am in AddrSpace
+
+For Main Thread:Initial Size Code+Int+Uninit = 1328
+
+For Main Thread:Initial Value of numPage = 19
+
+For Main Thread:Initial Size Code+Int+Uninit+MainStack = 2432
+
+PID 1, Starting Address of Stack 2288,stackPageBottom 18-Main Thread
+
+I am in InitRegisters StackReg For 2288
+
+Halt1: Your Exec is running
+
+PID 2, Starting Address of Stack 2416,stackPageBottom 19-Main Thread
+
+I am in InitRegisters StackReg For 2416
+
+Halt2: Your Exec is running
+
+Calling exit
+
+Mayur!! Total number of Threads for Process with PID 0 ==> 1 
+
+PID as 0 - Last Thread of a Process Only-IF
+
+PID 1, Starting Address of Stack 3312
+
+HALT 1: myFunction1
+
+Calling exit
+
+PID 2, Starting Address of Stack 3440
+
+Calling exit
+
+PID 1, Starting Address of Stack 4336
+
+HALT 1: myFunction2
+
+HALT 2: myFunction1
+
+HALT 1: myFunction1: SumIsCorrect
+
+Calling exit
+
+PID 2, Starting Address of Stack 4464
+
+HALT 2: myFunction2
+
+PID as 1 - Not a Last Thread of A Process-IF
+
+PID 1, Starting Address of Stack 5360
+
+Halt 1: Add Function
+
+Calling exit
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+PID as 1 - Not a Last Thread of A Process-IF
+
+HALT 1: myFunction2: SumIsCorrect
+
+Calling exit
+
+HALT 2: myFunction2: SumIsCorrect
+
+Calling exit
+
+PID 1, Starting Address of Stack 6384
+
+Halt 1: Add Function
+
+Calling exit
+
+PID 2, Starting Address of Stack 5488
+
+HALT 2: Add Function
+
+Calling Exec
+
+PID as 1 - Not a Last Thread of A Process-IF
+
+PID 2, Starting Address of Stack 6512
+
+HALT 2: Add Function
+
+PID as 1 - Not a Last Thread of A Process-IF
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+Mayur!! Total number of Threads for Process with PID 1 ==> 5 
+
+PID as 1 - Last Thread of a Process Only-IF
+
+Calling exit
+
+I am in AddrSpace
+
+PID 2, Starting Address of Stack 7536
+
+HALT 2: Add111 Functi
+Calling exit
+
+For Main Thread:Initial Size Code+Int+Uninit = 608
+
+For Main Thread:Initial Value of numPage = 13
+
+For Main Thread:Initial Size Code+Int+Uninit+MainStack = 1664
+
+PID 3, Starting Address of Stack 1648,stackPageBottom 13-Main Thread
+
+I am in InitRegisters StackReg For 1648
+
+HALT 2: myFunction1: SumIsCorrect
+
+Calling exit
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+PID 2, Starting Address of Stack 8560
+
+HALT 2: Add111 Functi
+Calling exit
+
+Calling exit
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+
+Sort: Your Exec is running
+
+
+Calling exit
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+PID 3, Starting Address of Stack 2672
+
+
+Sort 1: Add Function
+
+
+Calling Exec
+
+PID as 2 - Not a Last Thread of A Process-IF
+
+Mayur!! Total number of Threads for Process with PID 2 ==> 7 
+
+PID as 2 - Last Thread of a Process Only-IF
+
+PID as 3 - Not a Last Thread of A Process-IF
+
+I am in AddrSpace
+
+For Main Thread:Initial Size Code+Int+Uninit = 5936
+
+For Main Thread:Initial Value of numPage = 55
+
+For Main Thread:Initial Size Code+Int+Uninit+MainStack = 7040
+
+Calling exit
+
+Mayur!! Total number of Threads for Process with PID 3 ==> 2 
+
+PID as 3 - Last Thread of a Process Only-IF
+
+PID 4, Starting Address of Stack 7024,stackPageBottom 55-Main Thread
+
+I am in InitRegisters StackReg For 7024
+
+I am  in MATMULT, just checking
+
+Calling exit
+
+Mayur!! Total number of Threads for Process with PID 4 ==> 1 
+
+PID as 4 - Global Last Thread-IF
+Machine halting!
+
+Ticks: total 712609, idle 0, system 72600, user 640009
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 0
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

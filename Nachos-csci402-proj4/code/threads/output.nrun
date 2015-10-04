@@ -1,0 +1,671 @@
+
+Customer [1] in Group [0] has entered the movie theater.
+
+Customer[1] of group[0] is waiting for the HeadCustomer.
+
+Customer [2] in Group [0] has entered the movie theater.
+
+Customer[3] in Group[1] is getting in TicketClerk line[0]
+
+Customer [4] in Group [1] has entered the movie theater.
+
+Customer[4] of group[1] is waiting for the HeadCustomer.
+
+Customer [6] in Group [1] has entered the movie theater.
+
+Customer[6] of group[1] is waiting for the HeadCustomer.
+
+Customer[0] in Group[0] is getting in TicketClerk line[1]
+
+Customer[2] of group[0] is waiting for the HeadCustomer.
+
+Customer [5] in Group [1] has entered the movie theater.
+
+Customer[5] of group[1] is waiting for the HeadCustomer.
+
+Customer[7] in Group[2] is getting in TicketClerk line[2]
+
+Customer [8] in Group [2] has entered the movie theater.
+
+Customer[8] of group[2] is waiting for the HeadCustomer.
+
+Customer[9] in Group[3] is getting in TicketClerk line[3]
+
+Customer [10] in Group [3] has entered the movie theater.
+
+Customer[10] of group[3] is waiting for the HeadCustomer.
+
+Customer [11] in Group [3] has entered the movie theater.
+
+Inside TT threads
+
+Inside TT threads
+
+Inside TT threads
+
+Customer[11] of group[3] is waiting for the HeadCustomer.
+
+TicketClerk[0] has a line length=1 and is signaling a customer.
+
+TicketClerk[1] has a line length=1 and is signaling a customer.
+
+ConcessionClerk[0] has no one in line. I am available for a customer.
+
+ConcessionClerk[1] has no one in line. I am available for a customer.
+
+Customer [12] in Group [3] has entered the movie theater.
+
+Customer[12] of group[3] is waiting for the HeadCustomer.
+
+TicketTaker[0] has no one in line. I am available for a customer.
+
+TicketClerk[2] has a line length=1 and is signaling a customer.
+
+ConcessionClerk[2] has no one in line. I am available for a customer.
+
+TicketTaker[1] has no one in line. I am available for a customer.
+
+TicketClerk[3] has a line length=1 and is signaling a customer.
+
+ConcessionClerk[3] has no one in line. I am available for a customer.
+
+TicketTaker[2] has no one in line. I am available for a customer.
+
+TicketClerk[4] has no one in line. I am available for a customer.
+
+ConcessionClerk[4] has no one in line. I am available for a customer.
+
+Customer[3] in Group[1] is walking up to TicketClerk[0] to buy 4 tickets
+
+Customer[0] in Group[0] is walking up to TicketClerk[1] to buy 3 tickets
+
+Customer[7] in Group[2] is walking up to TicketClerk[2] to buy 2 tickets
+
+TicketClerk[1] has an order for 3 tickets and the cost is $36.
+
+TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+Customer[9] in Group[3] is walking up to TicketClerk[3] to buy 4 tickets
+
+TicketClerk[2] has an order for 2 tickets and the cost is $24.
+
+Customer[0] in Group[0] in TicketClerk line[1] is paying 36 for tickets
+
+Customer[3] in Group[1] in TicketClerk line[0] is paying 48 for tickets
+
+Manager has told TicketClerk[3] to go on break.
+
+TicketClerk[3] has an order for 4 tickets and the cost is $48.
+
+Manager has told TicketClerk[4] to go on break.
+
+Customer[9] in Group[3] in TicketClerk line[3] is paying 48 for tickets
+
+Customer[7] in Group[2] in TicketClerk line[2] is paying 24 for tickets
+
+Customer[3] in Group[1] is leaving TicketClerk[0]
+
+Customer[0] in Group[0] is leaving TicketClerk[1]
+
+Customer[4] in group[1] wants 1 popcorn and 1 soda.
+
+Customer[4] in Group[1] has 1 popcorn and 1 soda request from a group member
+
+TicketClerk[1] has no one in line. I am available for a customer.
+
+Customer[7] in Group[2] is leaving TicketClerk[2]
+
+Customer[1] in group[0] wants 1 popcorn and 1 soda.
+
+Customer[1] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+Customer[1] of group[0] is waiting for the HeadCustomer.
+
+Customer[2] in group[0] wants 1 popcorn and 1 soda.
+
+Customer[2] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+Customer[4] of group[1] is waiting for the HeadCustomer.
+
+TicketClerk[0] has no one in line. I am available for a customer.
+
+Customer[8] in group[2] wants 1 popcorn and 1 soda.
+
+Customer[8] in Group[2] has 1 popcorn and 1 soda request from a group member
+
+Customer[8] of group[2] is waiting for the HeadCustomer.
+
+Customer[6] in group[1] wants 1 popcorn and 1 soda.
+
+Customer[6] in Group[1] has 1 popcorn and 1 soda request from a group member
+
+Customer[9] in Group[3] is leaving TicketClerk[3]
+
+Customer[0] in group[0] wants 0 popcorn and 1 soda.
+
+Customer[0] in Group[0] is getting in ConcessionClerk Line[0]
+
+Customer[5] in group[1] wants 1 popcorn and 1 soda.
+
+Customer[5] in Group[1] has 1 popcorn and 1 soda request from a group member
+
+Customer[7] in group[2] wants 1 popcorn and 1 soda.
+
+Customer[7] in Group[2] is getting in ConcessionClerk Line[1]
+
+Customer[7] in Group[2] is walking up to ConcessionClerk[1] to buy [2] popcorn and [2] soda.
+
+Customer[2] of group[0] is waiting for the HeadCustomer.
+
+Customer[6] of group[1] is waiting for the HeadCustomer.
+
+TicketClerk[2] has no one in line. I am available for a customer.
+
+Customer[10] in group[3] wants 1 popcorn and 0 soda.
+
+Customer[10] in Group[3] has 1 popcorn and 0 soda request from a group member
+
+ConcessionClerk[1] has an order for 2 popcorn and 2 soda. The cost is $18.
+
+Customer[5] of group[1] is waiting for the HeadCustomer.
+
+Customer[11] in group[3] wants 1 popcorn and 1 soda.
+
+Customer[11] in Group[3] has 1 popcorn and 1 soda request from a group member
+
+Customer[7] in Group[2] in ConcessionClerk line[1] is paying[18] for food.
+
+Customer[0] in Group[0] is walking up to ConcessionClerk[0] to buy [2] popcorn and [3] soda.
+
+Customer[3] in group[1] wants 1 popcorn and 1 soda.
+
+Customer[3] in Group[1] is getting in ConcessionClerk Line[2]
+
+TicketClerk[3] is going on break.
+
+ConcessionClerk[1] has been paid for the order.
+
+ConcessionClerk[0] has an order for 2 popcorn and 3 soda. The cost is $22.
+
+Customer[3] in Group[1] is walking up to ConcessionClerk[2] to buy [4] popcorn and [4] soda.
+
+Manager has told ConcessionClerk[0] to go on break 
+
+Customer[12] in group[3] wants 1 popcorn and 1 soda.
+
+Customer[12] in Group[3] has 1 popcorn and 1 soda request from a group member
+
+Customer[0] in Group[0] in ConcessionClerk line[0] is paying[22] for food.
+
+Customer[10] of group[3] is waiting for the HeadCustomer.
+
+Customer[7] in Group [2] is leaving ConcessionClerk[1]
+
+Customer[7] in Group[2] is getting in TicketTaker Line[0] a 
+
+ConcessionClerk[0] has been paid for the order.
+
+ConcessionClerk[2] has an order for 4 popcorn and 4 soda. The cost is $36.
+
+ConcessionClerk[1] has no one in line. I am available for a customer.
+
+Customer[3] in Group[1] in ConcessionClerk line[2] is paying[36] for food.
+
+Customer[11] of group[3] is waiting for the HeadCustomer.
+
+TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 2.
+
+TicketTaker[0] has no one in line. I am available for a customer.
+
+Customer[0] in Group [0] is leaving ConcessionClerk[0]
+
+Customer[0] in Group[0] is getting in TicketTaker Line[0] a 
+
+ConcessionClerk[0] is going on break.
+Customer[12] of group[3] is waiting for the HeadCustomer.
+
+ConcessionClerk[2] has been paid for the order.
+
+Customer[9] in group[3] wants 1 popcorn and 1 soda.
+
+Customer[9] in Group[3] is getting in ConcessionClerk Line[1]
+
+Customer[7] in Group[2] is leaving TicketTaker[0]
+
+HeadCustomer[7] of group[2] has told the group to proceed.
+
+Customer[7] in Group[2] has found the following seat: row[0] and seat[0]
+
+Customer[7] of group[2] is sitting in a theater room seat.
+
+Customer[3] in Group [1] is leaving ConcessionClerk[2]
+
+Customer[3] in Group[1] is getting in TicketTaker Line[1] a 
+
+ConcessionClerk[2] has no one in line. I am available for a customer.
+
+TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 3.
+
+TicketTaker[0] has no one in line. I am available for a customer.
+
+Customer[8] in Group[2] has found the following seat: row[0] and seat[1]
+
+Customer[8] of group[2] is sitting in a theater room seat.
+
+TicketTaker[1] is allowing the group into the theater. The number of tickets taken is 4.
+
+TicketTaker[1] has no one in line. I am available for a customer.
+
+Customer[9] in Group[3] is walking up to ConcessionClerk[1] to buy [4] popcorn and [3] soda.
+
+Customer[0] in Group[0] is leaving TicketTaker[0]
+
+HeadCustomer[0] of group[0] has told the group to proceed.
+
+Customer[0] in Group[0] has found the following seat: row[0] and seat[2]
+
+Customer[0] of group[0] is sitting in a theater room seat.
+
+Manager- countCustTT=3 totalHeadCust=4 total=3
+
+Manager- custEnteredTheater=3 custTicketsApproved=9
+
+ConcessionClerk[1] has an order for 4 popcorn and 3 soda. The cost is $32.
+
+Customer[3] in Group[1] is leaving TicketTaker[1]
+
+HeadCustomer[3] of group[1] has told the group to proceed.
+
+Customer[9] in Group[3] in ConcessionClerk line[1] is paying[32] for food.
+
+Customer[1] in Group[0] has found the following seat: row[0] and seat[3]
+
+Customer[1] of group[0] is sitting in a theater room seat.
+
+ConcessionClerk[1] has been paid for the order.
+
+ConcessionClerk[1] has no one in line. I am available for a customer.
+
+Customer[2] in Group[0] has found the following seat: row[0] and seat[4]
+
+Customer[2] of group[0] is sitting in a theater room seat.
+
+Customer[9] in Group [3] is leaving ConcessionClerk[1]
+
+Customer[9] in Group[3] is getting in TicketTaker Line[0] a 
+
+Customer[3] in Group[1] has found the following seat: row[1] and seat[0]
+
+Customer[3] of group[1] is sitting in a theater room seat.
+
+Total money made by office = $264
+
+Customer[4] in Group[1] has found the following seat: row[1] and seat[1]
+
+Customer[4] of group[1] is sitting in a theater room seat.
+
+Manager collected $48 from TicketClerk[0].
+
+Manager collected $36 from TicketClerk[1].
+
+Manager collected $24 from TicketClerk[2].
+
+Manager collected $48 from TicketClerk[3].
+
+Manager collected $0 from TicketClerk[4].
+
+TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+Customer[6] in Group[1] has found the following seat: row[1] and seat[2]
+
+Customer[6] of group[1] is sitting in a theater room seat.
+
+Customer[9] in Group[3] is leaving TicketTaker[0]
+
+HeadCustomer[9] of group[3] has told the group to proceed.
+
+TicketTaker[0] has no one in line. I am available for a customer.
+
+Customer[5] in Group[1] has found the following seat: row[1] and seat[3]
+
+Customer[5] of group[1] is sitting in a theater room seat.
+
+Customer[9] in Group[3] has found the following seat: row[2] and seat[0]
+
+Customer[9] of group[3] is sitting in a theater room seat.
+
+Customer[10] in Group[3] has found the following seat: row[2] and seat[1]
+
+Customer[10] of group[3] is sitting in a theater room seat.
+
+Manager collected $22 from ConcessionClerk[0].
+
+Manager collected $50 from ConcessionClerk[1].
+
+Manager collected $36 from ConcessionClerk[2].
+
+Manager collected $0 from ConcessionClerk[3].
+
+Manager collected $0 from ConcessionClerk[4].
+
+Customer[11] in Group[3] has found the following seat: row[2] and seat[2]
+
+Customer[11] of group[3] is sitting in a theater room seat.
+
+Customer[12] in Group[3] has found the following seat: row[2] and seat[3]
+
+Customer[12] of group[3] is sitting in a theater room seat.
+
+Manager has told ConcessionClerk[1] to go on break 
+
+Manager- countCustTT=4 totalHeadCust=4 total=4
+
+Manager Asking#### TicketTaker[0] to change their state to -1
+
+Manager Asking#### TicketTaker[1] to change their state to -1
+
+Manager Asking#### TicketTaker[2] to change their state to -1
+
+Manager Told ~~~~ TicketTaker[0] has stopped taking tickets
+
+Manager Told ~~~~ TicketTaker[1] has stopped taking tickets
+
+Manager Told ~~~~ TicketTaker[2] has stopped taking tickets
+
+Manager- custEnteredTheater=13 custTicketsApproved=13
+
+Total money made by office = $264
+
+Manager collected $48 from TicketClerk[0].
+
+Manager collected $36 from TicketClerk[1].
+
+Manager collected $24 from TicketClerk[2].
+
+Manager collected $48 from TicketClerk[3].
+
+Manager collected $0 from TicketClerk[4].
+
+Manager collected $22 from ConcessionClerk[0].
+
+Manager collected $50 from ConcessionClerk[1].
+
+Manager collected $36 from ConcessionClerk[2].
+
+Manager collected $0 from ConcessionClerk[3].
+
+Manager collected $0 from ConcessionClerk[4].
+
+Manager has told TicketClerk[0] to go on break.
+
+Manager has told TicketClerk[2] to go on break.
+
+Manager has told ConcessionClerk[0] to go on break 
+
+Manager has told ConcessionClerk[3] to go on break 
+
+Manager- countCustTT=4 totalHeadCust=4 total=4
+
+Manager- custEnteredTheater=13 custTicketsApproved=13
+
+Manager is telling the MovieTechnnician to start the movie.
+
+Total money made by office = $264
+
+Manager collected $48 from TicketClerk[0].
+
+Manager collected $36 from TicketClerk[1].
+
+Manager collected $24 from TicketClerk[2].
+
+Manager collected $48 from TicketClerk[3].
+
+Manager collected $0 from TicketClerk[4].
+
+The MovieTechnician has started the movie.
+
+Manager collected $22 from ConcessionClerk[0].
+
+Manager collected $50 from ConcessionClerk[1].
+
+Manager collected $36 from ConcessionClerk[2].
+
+Manager collected $0 from ConcessionClerk[3].
+
+Manager collected $0 from ConcessionClerk[4].
+
+Manager- countCustTT=4 totalHeadCust=4 total=4
+
+Manager- custEnteredTheater=13 custTicketsApproved=0
+
+The MovieTechnician has ended the movie.
+
+The MovieTechnician has told all customers to leave the theater room.
+
+Customer[7] of group[2] xyz
+HeadCustomer[7] of group[2] is waiting for the group to form.
+
+Customer[8] of group[2] abc
+
+Customer[8] of group[2] is getting out of a theater room seat.
+
+Customer[8] of group[2] is waiting for the group to form.
+
+Customer[0] of group[0] xyz
+HeadCustomer[0] of group[0] is waiting for the group to form.
+
+HeadCustomer[7] of group[2] has told the group to proceed.
+
+Customer[1] of group[0] abc
+
+Customer[1] of group[0] is getting out of a theater room seat.
+
+Customer[1] of group[0] is waiting for the group to form.
+
+Customer[2] of group[0] abc
+
+Customer[2] of group[0] is getting out of a theater room seat.
+
+Customer[3] of group[1] xyz
+HeadCustomer[3] of group[1] is waiting for the group to form.
+
+Customer[4] of group[1] abc
+
+Customer[4] of group[1] is getting out of a theater room seat.
+
+Customer[4] of group[1] is waiting for the group to form.
+
+Customer[2] of group[0] is waiting for the group to form.
+
+Customer[6] of group[1] abc
+
+Customer[6] of group[1] is getting out of a theater room seat.
+
+Customer[6] of group[1] is waiting for the group to form.
+
+Customer[5] of group[1] abc
+
+Customer[5] of group[1] is getting out of a theater room seat.
+
+Customer[5] of group[1] is waiting for the group to form.
+
+HeadCustomer[0] of group[0] has told the group to proceed.
+
+Customer[9] of group[3] xyz
+HeadCustomer[9] of group[3] is waiting for the group to form.
+
+HeadCustomer[3] of group[1] has told the group to proceed.
+
+Customer[10] of group[3] abc
+
+Customer[10] of group[3] is getting out of a theater room seat.
+
+Customer[10] of group[3] is waiting for the group to form.
+
+Customer[11] of group[3] abc
+
+Customer[11] of group[3] is getting out of a theater room seat.
+
+Customer[11] of group[3] is waiting for the group to form.
+
+Customer[12] of group[3] abc
+
+Customer[12] of group[3] is getting out of a theater room seat.
+
+Customer[12] of group[3] is waiting for the group to form.
+
+Total money made by office = $264
+
+Manager collected $48 from TicketClerk[0].
+
+HeadCustomer[9] of group[3] has told the group to proceed.
+
+Manager collected $36 from TicketClerk[1].
+
+Manager collected $24 from TicketClerk[2].
+
+Manager collected $48 from TicketClerk[3].
+
+Manager collected $0 from TicketClerk[4].
+
+Customer[8] of group[2] has been told by the HeadCustomer to proceed.
+
+HeadCustomer[7] of group[2] is waiting for the group to form.
+
+Manager collected $22 from ConcessionClerk[0].
+
+Manager collected $50 from ConcessionClerk[1].
+
+Manager collected $36 from ConcessionClerk[2].
+
+Manager collected $0 from ConcessionClerk[3].
+
+Manager collected $0 from ConcessionClerk[4].
+
+Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+HeadCustomer[0] of group[0] is waiting for the group to form.
+
+Customer[4] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[5] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[3] in Group[1] is going to the bathroom.
+
+Manager- countCustTT=4 totalHeadCust=4 total=4
+
+Customer[10] of group[3] has been told by the HeadCustomer to proceed.
+
+Customer[3] in Group[1] is leaving the bathroom.
+
+HeadCustomer[3] of group[1] is waiting for the group to form.
+
+Customer[11] of group[3] has been told by the HeadCustomer to proceed.
+
+Customer[12] of group[3] has been told by the HeadCustomer to proceed.
+
+Customer[9] in Group[3] is going to the bathroom.
+
+Customer[8] of group[2] is waiting for the group to form.
+
+Customer[9] in Group[3] is leaving the bathroom.
+
+HeadCustomer[9] of group[3] is waiting for the group to form.
+
+HeadCustomer[7] of group[2] has told the group to proceed.
+
+Customer[2] of group[0] is waiting for the group to form.
+
+Customer[1] in Group[0] is going to the bathroom.
+
+Customer[8] of group[2] has been told by the HeadCustomer to proceed.
+
+Customer[4] of group[1] is waiting for the group to form.
+
+Customer[1] in Group[0] is leaving the bathroom.
+
+Customer[1] of group[0] is waiting for the group to form.
+
+Customer[6] of group[1] is waiting for the group to form.
+
+HeadCustomer[0] of group[0] has told the group to proceed.
+
+Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+Manager- custEnteredTheater=13 custTicketsApproved=0
+
+Customer[5] of group[1] is waiting for the group to form.
+
+HeadCustomer[3] of group[1] has told the group to proceed.
+
+Customer[10] in Group[3] is going to the bathroom.
+
+Customer[4] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[5] of group[1] has been told by the HeadCustomer to proceed.
+
+Customer[10] in Group[3] is leaving the bathroom.
+
+Customer[10] of group[3] is waiting for the group to form.
+
+Customer[11] of group[3] is waiting for the group to form.
+
+TicketTaker[0] has no one in line. I am available for a customer.
+
+Customer[12] of group[3] is waiting for the group to form.
+
+TicketTaker[1] has no one in line. I am available for a customer.
+
+Total money made by office = $264
+
+Manager collected $48 from TicketClerk[0].
+
+Manager collected $36 from TicketClerk[1].
+
+Manager collected $24 from TicketClerk[2].
+
+Manager collected $48 from TicketClerk[3].
+
+HeadCustomer[9] of group[3] has told the group to proceed.
+
+TicketTaker[2] has no one in line. I am available for a customer.
+
+Manager collected $0 from TicketClerk[4].
+
+Customer[10] of group[3] has been told by the HeadCustomer to proceed.
+
+Customer[11] of group[3] has been told by the HeadCustomer to proceed.
+
+Customer[12] of group[3] has been told by the HeadCustomer to proceed.
+
+Manager collected $22 from ConcessionClerk[0].
+
+Manager collected $50 from ConcessionClerk[1].
+
+Manager collected $36 from ConcessionClerk[2].
+
+Manager collected $0 from ConcessionClerk[3].
+
+Manager collected $0 from ConcessionClerk[4].
+
+
+Bye Bye..Simulation Completed!!
+No threads ready or runnable, and no pending interrupts.
+Assuming the program completed.
+Machine halting!
+
+Ticks: total 14888, idle 28, system 14860, user 0
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 0
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

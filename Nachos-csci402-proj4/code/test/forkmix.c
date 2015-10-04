@@ -1,0 +1,68 @@
+/* matmult.c
+ *    Test program to do matrix multiplication on large arrays.
+ *
+ *    Intended to stress virtual memory system.
+ *
+ *    Ideally, we could read the matrices off of the file system,
+ *	and store the result back to the file system!
+ */
+
+#include "syscall.h"
+
+#define Dim 	20	/* sum total of the arrays doesn't fit in
+			 * physical memory
+			 */
+
+int A[Dim][Dim];
+int B[Dim][Dim];
+int C[Dim][Dim];
+
+int G[1024];
+
+void
+mat1()
+{
+    int i, j, k;
+
+    for (i = 0; i < Dim; i++)		/* first initialize the matrices */
+	for (j = 0; j < Dim; j++) {
+	     A[i][j] = i;
+	     B[i][j] = j;
+	     C[i][j] = 0;
+	}
+
+    for (i = 0; i < Dim; i++)		/* then multiply them together */
+	for (j = 0; j < Dim; j++)
+            for (k = 0; k < Dim; k++)
+		 C[i][j] += A[i][k] * B[k][j];
+
+    Print("\nMatmult Result:: %d\n",C[Dim-1][Dim-1],1,1);
+    Exit(C[Dim-1][Dim-1]);		/* and then we're done */
+}
+
+void sort()
+{
+	 int i, j, tmp;
+
+
+	 for (i = 0; i < 1024; i++)
+	        G[i] = 1024 - i;
+
+	    for (i = 0; i < 1023; i++)
+	        for (j = i; j < (1023 - i); j++)
+		   if (G[j] > G[j + 1]) {	/* out of order -> need to swGp ! */
+		      tmp = G[j];
+		      G[j] = G[j + 1];
+		      G[j + 1] = tmp;
+	    	   }
+
+	    Print("\nSort Answer::%d\n",G[0],1,1);
+	Exit(0);
+}
+int main()
+{
+
+Fork(mat1);
+Fork(sort);
+}
+

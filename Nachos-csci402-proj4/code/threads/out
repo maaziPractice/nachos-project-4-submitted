@@ -1,0 +1,986 @@
+
+
+Number of groups is 8
+
+
+Total Number of Customers 24
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 0 ,with group size 3 
+
+ I am HeadCustomer 0 : I am FIRST in queue of Ticket Clerk 0 waking up the Ticket Clerk 0
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 1 ,with group size 3 
+
+ I am HeadCustomer 1 : I am FIRST in queue of Ticket Clerk 1 waking up the Ticket Clerk 1
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 2 ,with group size 3 
+
+ I am HeadCustomer 2 : I am FIRST in queue of Ticket Clerk 2 waking up the Ticket Clerk 2
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 3 ,with group size 3 
+
+ I am HeadCustomer 3 : I am FIRST in queue of Ticket Clerk 3 waking up the Ticket Clerk 3
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 4 ,with group size 3 
+
+ I am HeadCustomer 4 : I am FIRST in queue of Ticket Clerk 4 waking up the Ticket Clerk 4
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 5 ,with group size 3 
+
+ I am HeadCustomer 5 : am in queue of Ticket Clerk 0 
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 6 ,with group size 3 
+
+ I am HeadCustomer 6 : am in queue of Ticket Clerk 1 
+
+I am waking up the Head
+
+hi I am a Head Customer, with groupID 7 ,with group size 3 
+
+ I am HeadCustomer 7 : am in queue of Ticket Clerk 2 
+
+Remaining number of Seats 25
+
+Remaining number of Seats 25
+
+Remaining number of Seats 25
+
+Remaining number of Seats 25
+
+Remaining number of Seats 25
+
+I am the Concession Clerk 0 going on wait
+
+I am the Concession Clerk 1 going on wait
+
+I am the Concession Clerk 2 going on wait
+
+I am the Concession Clerk 3 going on wait
+
+I am the Concession Clerk 4 going on wait
+I am HeadCustomer 0: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 1: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 2: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 3: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 4: my group size is 3 & I want the same number of Tickets
+I am Ticket Clerk 0:Ok HeadCustomer 0,you have to pay 36 for the tickets
+I am Ticket Clerk 1:Ok HeadCustomer 1,you have to pay 36 for the tickets
+I am Ticket Clerk 2:Ok HeadCustomer 2,you have to pay 36 for the tickets
+I am Ticket Clerk 3:Ok HeadCustomer 3,you have to pay 36 for the tickets
+I am Ticket Clerk 4:Ok HeadCustomer 4,you have to pay 36 for the tickets
+I am HeadCustomer 0: here is my payment 36
+I am HeadCustomer 1: here is my payment 36
+I am HeadCustomer 2: here is my payment 36
+I am HeadCustomer 3: here is my payment 36
+I am HeadCustomer 4: here is my payment 36
+Head Customer 0, here are yours and your group's tickets 3
+Head Customer 1, here are yours and your group's tickets 3
+Head Customer 2, here are yours and your group's tickets 3
+Head Customer 3, here are yours and your group's tickets 3
+Head Customer 4, here are yours and your group's tickets 3
+
+In Manager- TT 0-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 0
+tt on break ID -10000
+Manager ordering TT 0 to go On break1,status of TT is 0
+ 
+Manager ordering TT 4 to go On break1,status of TT is 0
+ Thank you Clerk 0
+Thank you Clerk 1
+Thank you Clerk 2
+Thank you Clerk 3
+Thank you Clerk 4
+
+hey Manager TT 0 have Completed you order
+TT0 going on wait on MyManagerTTCV
+hey Manager TT 4 have Completed you order
+TT4 going on wait on MyManagerTTCV
+hey my head Customer of group 0 take these are my popcorns 1,	 am customer 1
+
+hey my head Customer of group 1 take these are my popcorns 1,	 am customer 1
+
+hey my head Customer of group 2 take these are my popcorns 0,	 am customer 1
+
+I am the Ticket Taker 3 going on wait
+
+hey my head Customer of group 3 take these are my popcorns 1,	 am customer 1
+
+I am the Ticket Taker 4 going on wait
+
+hey my head Customer of group 4 take these are my popcorns 0,	 am customer 1
+I am HeadCustomer 5: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 6: my group size is 3 & I want the same number of Tickets
+I am HeadCustomer 7: my group size is 3 & I want the same number of Tickets
+I am Ticket Clerk 0:Ok HeadCustomer 5,you have to pay 36 for the tickets
+
+hey my head Customer of group 0 take these are my popcorns 0,	 am customer 2
+I am Ticket Clerk 1:Ok HeadCustomer 6,you have to pay 36 for the tickets
+
+hey my head Customer of group 1 take these are my popcorns 1,	 am customer 2
+I am Ticket Clerk 2:Ok HeadCustomer 7,you have to pay 36 for the tickets
+
+hey my head Customer of group 2 take these are my popcorns 1,	 am customer 2
+
+hey my head Customer of group 3 take these are my popcorns 1,	 am customer 2
+
+hey my head Customer of group 4 take these are my popcorns 1,	 am customer 2
+I am HeadCustomer 5: here is my payment 36
+
+ I am HeadCustomer 0 : I am FIRST in queue of Concession Clerk 0 waking up the Concession Clerk 0
+I am HeadCustomer 6: here is my payment 36
+
+ I am HeadCustomer 1 : I am FIRST in queue of Concession Clerk 1 waking up the Concession Clerk 1
+I am HeadCustomer 7: here is my payment 36
+
+ I am HeadCustomer 2 : I am FIRST in queue of Concession Clerk 2 waking up the Concession Clerk 2
+
+ I am HeadCustomer 3 : I am FIRST in queue of Concession Clerk 3 waking up the Concession Clerk 3
+
+ I am HeadCustomer 4 : I am FIRST in queue of Concession Clerk 4 waking up the Concession Clerk 4
+
+In Manager- TT 0-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+Head Customer 0, here are yours and your group's tickets 3
+Head Customer 1, here are yours and your group's tickets 3
+Head Customer 2, here are yours and your group's tickets 3
+Thank you Clerk 0
+I am HeadCustomer 0: my group needs 1 popcorns and 2 sodas 
+Thank you Clerk 1
+I am HeadCustomer 1: my group needs 2 popcorns and 2 sodas 
+Thank you Clerk 2
+I am HeadCustomer 2: my group needs 1 popcorns and 2 sodas 
+I am HeadCustomer 3: my group needs 2 popcorns and 3 sodas 
+I am HeadCustomer 4: my group needs 2 popcorns and 2 sodas 
+
+I am the Ticket Taker 0 going on wait
+
+hey my head Customer of group 5 take these are my popcorns 1,	 am customer 1
+I am Concession Clerk 0:Ok HeadCustomer 0,you have to pay 13 for the popcorns and soda
+
+I am the Ticket Taker 1 going on wait
+
+hey my head Customer of group 6 take these are my popcorns 1,	 am customer 1
+I am Concession Clerk 1:Ok HeadCustomer 1,you have to pay 18 for the popcorns and soda
+
+I am the Ticket Taker 2 going on wait
+
+hey my head Customer of group 7 take these are my popcorns 1,	 am customer 1
+I am Concession Clerk 2:Ok HeadCustomer 2,you have to pay 13 for the popcorns and soda
+I am Concession Clerk 3:Ok HeadCustomer 3,you have to pay 22 for the popcorns and soda
+I am Concession Clerk 4:Ok HeadCustomer 4,you have to pay 18 for the popcorns and soda
+I am HeadCustomer 0: Here is my money 13
+I am HeadCustomer 1: Here is my money 18
+I am HeadCustomer 2: Here is my money 13
+I am HeadCustomer 3: Here is my money 22
+I am HeadCustomer 4: Here is my money 18
+
+hey my head Customer of group 5 take these are my popcorns 1,	 am customer 2
+I am Concession Clerk 0:Ok HeadCustomer 0 Here is your food
+
+hey my head Customer of group 6 take these are my popcorns 0,	 am customer 2
+I am Concession Clerk 1:Ok HeadCustomer 1 Here is your food
+
+hey my head Customer of group 7 take these are my popcorns 1,	 am customer 2
+I am Concession Clerk 2:Ok HeadCustomer 2 Here is your food
+I am Concession Clerk 3:Ok HeadCustomer 3 Here is your food
+I am Concession Clerk 4:Ok HeadCustomer 4 Here is your food
+
+In Manager- TT 0-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+Manager ordering TT 2 to go On break1,status of TT is 0
+ 
+ I am HeadCustomer 5 : am in queue of Concession Clerk 0 
+Thank you for my food Concession Clerk 0
+
+hi I am a Head Customer, with groupID 0 ,with group size 3 
+
+ I am HeadCustomer 0 : I am FIRST in queue of Ticket Taker 1 waking up the Ticket taker 1
+
+ I am HeadCustomer 6 : am in queue of Concession Clerk 1 
+Thank you for my food Concession Clerk 1
+
+hi I am a Head Customer, with groupID 1 ,with group size 3 
+
+ I am HeadCustomer 1 : I am FIRST in queue of Ticket Taker 2 waking up the Ticket taker 2
+
+ I am HeadCustomer 7 : am in queue of Concession Clerk 2 
+Thank you for my food Concession Clerk 2
+
+hi I am a Head Customer, with groupID 2 ,with group size 3 
+
+ I am HeadCustomer 2 : I am FIRST in queue of Ticket Taker 3 waking up the Ticket taker 3
+Thank you for my food Concession Clerk 3
+
+hi I am a Head Customer, with groupID 3 ,with group size 3 
+
+ I am HeadCustomer 3 : am in queue of Ticket Taker 0 
+Thank you for my food Concession Clerk 4
+
+hi I am a Head Customer, with groupID 4 ,with group size 3 
+
+ I am HeadCustomer 4 : am in queue of Ticket Taker 0 
+
+I am the Concession Clerk 3 going on wait
+
+I am the Concession Clerk 4 going on wait
+I am HeadCustomer 5: my group needs 3 popcorns and 3 sodas 
+I am HeadCustomer 0: my group size is 3 & I have the same number of Tickets
+I am HeadCustomer 6: my group needs 2 popcorns and 2 sodas 
+I am HeadCustomer 7: my group needs 3 popcorns and 2 sodas 
+I am HeadCustomer 2: my group size is 3 & I have the same number of Tickets
+
+hey Manager TT 2 have Completed you order
+TT2 going on wait on MyManagerTTCVI am Concession Clerk 0:Ok HeadCustomer 5,you have to pay 27 for the popcorns and soda
+I am Ticket Taker 1:Ok HeadCustomer 0,you can go in with 3 friends
+
+Remaining number of Seats 22
+I am Concession Clerk 1:Ok HeadCustomer 6,you have to pay 18 for the popcorns and soda
+I am Concession Clerk 2:Ok HeadCustomer 7,you have to pay 23 for the popcorns and soda
+I am Ticket Taker 3:Ok HeadCustomer 2,you can go in with 3 friends
+
+Remaining number of Seats 19
+
+
+
+We are ReArranging from TT 2
+
+
+
+
+111RowID 0 ,ColumnID 0 ,groupd ID 1
+111RowID 0 ,ColumnID 1 ,groupd ID 1
+111RowID 0 ,ColumnID 2 ,groupd ID 1
+
+
+We are going to watch movie,GroupID 1
+
+I am HeadCustomer 5: Here is my money 27
+
+For Group ID 0: 				Thanks TicketTaker 1 for letting us in 
+
+111RowID 1 ,ColumnID 0 ,groupd ID 0
+111RowID 1 ,ColumnID 1 ,groupd ID 0
+111RowID 1 ,ColumnID 2 ,groupd ID 0
+
+
+We are going to watch movie,GroupID 0
+
+I am HeadCustomer 6: Here is my money 18
+I am HeadCustomer 7: Here is my money 23
+
+For Group ID 2: 				Thanks TicketTaker 3 for letting us in 
+
+111RowID 2 ,ColumnID 0 ,groupd ID 2
+111RowID 2 ,ColumnID 1 ,groupd ID 2
+111RowID 2 ,ColumnID 2 ,groupd ID 2
+
+
+We are going to watch movie,GroupID 2
+
+Ok Head Cust of Group 1, Cust 1 am going to wait on Lobby CV !!
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+I am Concession Clerk 0:Ok HeadCustomer 5 Here is your food
+I am Concession Clerk 1:Ok HeadCustomer 6 Here is your food
+I am Concession Clerk 2:Ok HeadCustomer 7 Here is your food
+Thank you for my food Concession Clerk 0
+
+hi I am a Head Customer, with groupID 5 ,with group size 3 
+
+ I am HeadCustomer 5 : I am FIRST in queue of Ticket Taker 1 waking up the Ticket taker 1
+Thank you for my food Concession Clerk 1
+
+hi I am a Head Customer, with groupID 6 ,with group size 3 
+
+ I am HeadCustomer 6 : I am FIRST in queue of Ticket Taker 3 waking up the Ticket taker 3
+Thank you for my food Concession Clerk 2
+
+hi I am a Head Customer, with groupID 7 ,with group size 3 
+
+ I am HeadCustomer 7 : am in queue of Ticket Taker 1 
+
+I am the Concession Clerk 0 going on wait
+
+I am the Concession Clerk 1 going on wait
+
+I am the Concession Clerk 2 going on wait
+I am HeadCustomer 5: my group size is 3 & I have the same number of Tickets
+
+GroupID 0, Got my group on letMovieTechnicianStartMovieCV
+
+Number of people sat in theatre 3
+I am HeadCustomer 6: my group size is 3 & I have the same number of Tickets
+
+GroupID 2, Got my group on letMovieTechnicianStartMovieCV
+
+Number of people sat in theatre 6
+I am Ticket Taker 1:Ok HeadCustomer 5,you can go in with 3 friends
+I am Ticket Taker 3:Ok HeadCustomer 6,you can go in with 3 friends
+
+Remaining number of Seats 13
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count1,his pre order status 3,his state 1
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+For Group ID 5: 				Thanks TicketTaker 1 for letting us in 
+
+111RowID 3 ,ColumnID 0 ,groupd ID 5
+111RowID 3 ,ColumnID 1 ,groupd ID 5
+111RowID 3 ,ColumnID 2 ,groupd ID 5
+
+
+We are going to watch movie,GroupID 5
+
+I am HeadCustomer 7: my group size is 3 & I have the same number of Tickets
+
+For Group ID 6: 				Thanks TicketTaker 3 for letting us in 
+
+111RowID 4 ,ColumnID 0 ,groupd ID 6
+111RowID 4 ,ColumnID 1 ,groupd ID 6
+111RowID 4 ,ColumnID 2 ,groupd ID 6
+
+
+We are going to watch movie,GroupID 6
+
+I am Ticket Taker 1:Ok HeadCustomer 7,you can go in with 3 friends
+
+Remaining number of Seats 10
+
+For Group ID 7: 				Thanks TicketTaker 1 for letting us in 
+
+333RowID 0 ,ColumnID 3, GroupID 7
+333RowID 0 ,ColumnID 4, GroupID 7
+333RowID 1 ,ColumnID 3, GroupID 7
+
+
+We are going to watch movie,GroupID 7
+
+
+GroupID 5, Got my group on letMovieTechnicianStartMovieCV
+
+Number of people sat in theatre 9
+
+GroupID 6, Got my group on letMovieTechnicianStartMovieCV
+
+Number of people sat in theatre 12
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+Manager ordering TT 3 to go On break1,status of TT is 0
+ 
+hey Manager TT 3 have Completed you order
+TT3 going on wait on MyManagerTTCV
+GroupID 7, Got my group on letMovieTechnicianStartMovieCV
+
+Number of people sat in theatre 15
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 0
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+Manager ordering TT 1 to go On break1,status of TT is 0
+ 
+hey Manager TT 1 have Completed you order
+TT1 going on wait on MyManagerTTCV
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+
+In Manager- TT 0-Line Count2,his pre order status 3,his state 2
+
+In Manager- TT 1-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 2-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 3-Line Count0,his pre order status 3,his state 2
+
+In Manager- TT 4-Line Count0,his pre order status 3,his state 2
+tt on break ID 0
+isAnyTicketTakerOnBreak
+aNo threads ready or runnable, and no pending interrupts.
+Assuming the program completed.
+Machine halting!
+
+Ticks: total 20320, idle 0, system 20320, user 0
+Disk I/O: reads 0, writes 0
+Console I/O: reads 0, writes 0
+Paging: faults 0
+Network I/O: packets received 0, sent 0
+
+Cleaning up...

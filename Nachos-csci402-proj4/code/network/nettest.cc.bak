@@ -1,0 +1,855 @@
+// nettest.cc 
+//	Test out message delivery between two "Nachos" machines,
+//	using the Post Office to coordinate delivery.
+//
+//	Two caveats:
+//	  1. Two copies of Nachos must be running, with machine ID's 0 and 1:
+//		./nachos -m 0 -o 1 &
+//		./nachos -m 1 -o 0 &
+//
+//	  2. You need an implementation of condition variables,
+//	     which is *not* provided as part of the baseline threads 
+//	     implementation.  The Post Office won't work without
+//	     a correct implementation of condition variables.
+//
+// Copyright (c) 1992-1993 The Regents of the University of California.
+// All rights reserved.  See copyright.h for copyright notice and limitation 
+// of liability and disclaimer of warranty provisions.
+
+#include "copyright.h"
+
+#include "system.h"
+#include "network.h"
+#include "post.h"
+#include "interrupt.h"
+#include <cstring>
+
+using namespace std;
+int funcCreateLock(string);
+int funcCreateCV(string);
+void funcSend(int, int, string);
+int funcAcquire(int, ClientInfo*);
+int funcRelease(int, ClientInfo*);
+int funcSignal(int, int, ClientInfo*);
+int funcDeleteLock(int);
+int funcDeleteCV(int);
+
+int funcCreateMV(string, int);
+int funcSetMV(string, int, int);
+int funcGetMV(string, int);
+
+// Test out message delivery, by doing the following:
+//	1. send a message to the machine with ID "farAddr", at mail box #0
+//	2. wait for the other machine's message to arrive (in our mailbox #0)
+//	3. send an acknowledgment for the other machine's message
+//	4. wait for an acknowledgement from the other machine to our 
+//	    original message
+
+void
+MailTest(int farAddr)
+{
+    PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+    char *data = "Hello there!";
+    char *ack = "Got it!";
+    char buffer[MaxMailSize];
+
+    // construct packet, mail header for original message
+    // To: destination machine, mailbox 0
+    // From: our machine, reply to: mailbox 1
+    outPktHdr.to = farAddr;		
+    outMailHdr.to = 0;
+    outMailHdr.from = 1;
+    outMailHdr.length = strlen(data) + 1;
+
+    // Send the first message
+    bool success = postOffice->Send(outPktHdr, outMailHdr, data); 
+
+    if ( !success ) {
+      printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+      interrupt->Halt();
+    }
+
+    // Wait for the first message from the other machine
+    postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
+    printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
+    fflush(stdout);
+
+    // Send acknowledgement to the other machine (using "reply to" mailbox
+    // in the message that just arrived
+    outPktHdr.to = inPktHdr.from;
+    outMailHdr.to = inMailHdr.from;
+    outMailHdr.length = strlen(ack) + 1;
+    success = postOffice->Send(outPktHdr, outMailHdr, ack); 
+
+    if ( !success ) {
+      printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+      interrupt->Halt();
+    }
+
+    // Wait for the ack from the other machine to the first message we sent.
+    postOffice->Receive(1, &inPktHdr, &inMailHdr, buffer);
+    printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
+    fflush(stdout);
+
+    // Then we're done!
+    interrupt->Halt();
+}
+
+
+void MailTest1(int farAddr)
+{
+	printf("In mailtest1\n");
+    PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+    char *data = "Hello there!";
+    //char *ack = "Got it!";
+    char buffer[MaxMailSize];
+
+    // construct packet, mail header for original message
+    // To: destination machine, mailbox 0
+    // From: our machine, reply to: mailbox 1
+    outPktHdr.to = farAddr;		
+    outMailHdr.to = 0;
+    outMailHdr.from = 1;
+    outMailHdr.length = strlen(data) + 1;
+
+    // Send the first message
+    bool success = postOffice->Send(outPktHdr, outMailHdr, data); 
+
+    if ( !success ) {
+      printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+      interrupt->Halt();
+    }
+
+	printf("After send from MailTest1 \n");
+    // Wait for the first message from the other machine
+    postOffice->Receive(1, &inPktHdr, &inMailHdr, buffer);
+    printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
+    fflush(stdout);
+ 
+    interrupt->Halt();
+}
+
+
+void ServerMailTest(int farAddr)
+{
+
+    PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+    //char *data = "Hello there!";
+    char *ack = "Got it..fwefef...!";
+    char buffer[MaxMailSize];
+   postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
+    printf("Got \"%s\" from %d, box %d\n",buffer,inPktHdr.from,inMailHdr.from);
+    fflush(stdout);
+
+    // Send acknowledgement to the other machine (using "reply to" mailbox
+    // in the message that just arrived
+    outPktHdr.to = inPktHdr.from;
+    outMailHdr.to = inMailHdr.from;
+    outMailHdr.length = strlen(ack) + 1;
+    bool success = postOffice->Send(outPktHdr, outMailHdr, ack); 
+
+    if ( !success ) {
+      printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+      interrupt->Halt();
+    }
+
+    // Then we're done!
+
+	interrupt->Halt();
+}
+
+
+void myServerFunc()
+{
+
+	PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+    char *ack = "$";
+    int retVal=-1;
+	std::string passedValue,typeIdentifier,ackString,lockPassedValue,cvPassedValue;
+	int flagLockCV;
+	char buffer[MaxMailSize]={'\0'};
+	int tempi,buflen;
+	int lockIndex, cvIndex;
+	bool success;
+    
+	while(1)
+	{   
+		postOffice->Receive(0, &inPktHdr, &inMailHdr, buffer);
+		
+		typeIdentifier="";
+		typeIdentifier=typeIdentifier+buffer[0]+buffer[1];
+		passedValue="";
+		buflen=strlen(buffer);
+
+		for(tempi=2;tempi<buflen;tempi++)
+			passedValue=passedValue+buffer[tempi];
+
+		//cout<<"Got "<<passedValue<<" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+		//cout<<"typeIdentifier is "<<typeIdentifier<< endl;
+		fflush(stdout);
+		int indentifyVal=atoi(typeIdentifier.c_str());
+		//cout <<"indentifyVal is "<<indentifyVal<<endl;
+		
+		ClientInfo *addressInformation;
+		addressInformation=new ClientInfo;
+		addressInformation->machineId=inPktHdr.from;
+		addressInformation->mailboxNo=inMailHdr.from;	//CHECK ON THIS..............................................
+
+		switch(indentifyVal)
+		{
+			case 1:		//Create Lock
+
+			//cout<<"Got LockName \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			retVal=funcCreateLock(passedValue);
+			if(retVal != -1)
+			{
+				ackString="";
+				sprintf(ack,"%d",retVal);
+				for(unsigned int i=0;i<strlen(ack);i++)
+				{
+					ackString+=ack[i];
+				}
+				
+			}
+			else
+			{
+				ackString="CREATELOCK_FAILURE";
+			}
+
+			//cout<<"CreateLock- Index being returned is: "<<ackString<<endl;
+			funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			
+			break;		//End of create Lock case
+				
+			case 2:		//Acquire Lock
+			
+			//cout<<"Acquire- Got LockIndex \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			int lockToBeAcquiredIndex=atoi(passedValue.c_str());
+
+			int retAcquire=funcAcquire(lockToBeAcquiredIndex, addressInformation);
+
+			if(retAcquire==1 || retAcquire==3)
+			{
+				ackString="ACQUIRE_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			else if (retAcquire==2)
+			{
+				ackString="ACQUIRE_SUCCESS";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			
+			break;
+			//case 2 ends
+
+			case 3:		//Release Lock
+
+			//cout<<"Release- Got LockIndex \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			int lockToBeReleasedIndex=atoi(passedValue.c_str());
+			
+			int retRelease=funcRelease(lockToBeReleasedIndex, addressInformation);
+
+			if(retRelease==1 || retRelease==2 || retRelease==4)
+			{
+				ackString="RELEASE_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			else if (retRelease==3)
+			{
+				ackString="RELEASE_SUCCESS";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+
+			break;
+			//case 3 ends
+
+			case 4:		//Create CV
+
+			//cout<<"Got CVName \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			retVal=funcCreateCV(passedValue);
+
+			if(retVal != -1)
+			{
+				ackString="";
+				sprintf(ack,"%d",retVal);
+				for(unsigned int i=0;i<strlen(ack);i++)
+				{
+					ackString+=ack[i];
+				}
+
+			}
+			else
+			{
+				ackString="CREATECV_FAILURE";
+			}
+
+			funcSend(inPktHdr.from, inMailHdr.from, ackString);
+
+			break;
+			//case 4 CreateCV ends
+
+			
+			case 5:		//Wait 
+			
+			//cout<<"Wait- Got LockIndex \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			cvPassedValue="";
+			lockPassedValue="";
+			flagLockCV=0;
+
+			//Segregating the lock and cv id
+			for(unsigned int i=0;i<passedValue.size();i++)
+			{
+				if(passedValue[i]=='+')
+				{
+					flagLockCV=1;
+					continue;
+				}
+
+				if(flagLockCV==0)
+				{
+					cvPassedValue+=passedValue[i];
+				}
+				else
+				{
+					lockPassedValue+=passedValue[i];
+				}
+			}
+			//cout<<"Wait- Got CVIndex \""<<cvPassedValue<<"\" and LockIndex \""<<lockPassedValue<<"\""<<endl;
+
+			//converting lock id and cv id to integers
+			lockIndex=atoi(lockPassedValue.c_str());
+			cvIndex=atoi(cvPassedValue.c_str());
+			//string ackString;
+
+			if(lockIndex<0 || lockIndex>=nextServerLockLocation)
+			{
+				cout<<"Wait - ERROR:: LockIndex:"<<lockIndex<<" is Invalid .. Not been created"<<endl;
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;
+			}
+			if(cvIndex<0 || cvIndex>=nextServerLockLocation)
+			{
+				cout<<"Wait - ERROR:: CVIndex:"<<cvIndex<<" is Invalid .. Not been created"<<endl;
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;			
+			}
+			if(lock[lockIndex]==NULL)
+			{
+				printf("\nERROR - Wait:: Invalid Lock ID..NULL value ..\n");
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;
+			}
+			if(cv[cvIndex]==NULL)
+			{
+				printf("\nERROR - Wait:: Invalid CV ID..NULL value ..\n");
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;
+			}
+			if (lock[lockIndex]->ownerInfo->machineId != addressInformation->machineId || lock[lockIndex]->ownerInfo->mailboxNo != addressInformation->mailboxNo)
+			{
+				cout<<"Wait- ERROR:: You are not the lock owner.."<<endl;		
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;
+			}
+
+			if (cv[cvIndex]->waitingLock == -1)		//Not an Error Condition, since first thread calling wait
+			{
+				 //cout<<"This is the first thread calling wait.\n";
+				 cv[cvIndex]->waitingLock=lockIndex;
+			}
+
+			if (cv[cvIndex]->waitingLock!=lockIndex)
+			{
+				cout<<"Wait- ERROR:: The waiting Lock is not same as the condition Lock.\n";
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+				break;
+			}
+
+			//Releasing the lock before going to wait
+			//printf("\nWait- Going to release the lockIndex '%d'\n",lockIndex);
+			int releaseOnWait=funcRelease(lockIndex, addressInformation);
+			if(releaseOnWait==3)
+			{
+				printf("\nWait- lockIndex '%d' released successfully. Now going to wait\n",lockIndex);
+				cv[cvIndex]->conditionQueue->Append((void*)addressInformation);
+			}
+			else
+			{
+				printf("\nWait- ERROR:: lockIndex '%d' CANNOT be released. NOT going on wait\n",lockIndex);
+				ackString="WAIT_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+
+			break;	//case5 Wait ends
+
+
+			case 6:		//Signal 
+			
+			//cout<<"Signal- Got string \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			
+			cvPassedValue="";
+			lockPassedValue="";
+			flagLockCV=0;
+
+			//Segregating the lock and cv id
+			for(unsigned int i=0;i<passedValue.size();i++)
+			{
+				if(passedValue[i]=='+')
+				{
+					flagLockCV=1;
+					continue;
+				}
+
+				if(flagLockCV==0)
+				{
+					cvPassedValue+=passedValue[i];
+				}
+				else
+				{
+					lockPassedValue+=passedValue[i];
+				}
+			}
+			//cout<<"Signal- Got CVIndex \""<<cvPassedValue<<"\" and LockIndex \""<<lockPassedValue<<"\""<<endl;
+
+			//converting lock id and cv id to integers
+			lockIndex=atoi(lockPassedValue.c_str());
+			cvIndex=atoi(cvPassedValue.c_str());
+
+			int retSigVal = funcSignal(lockIndex, cvIndex, addressInformation);
+
+			if(retSigVal==2)
+			{
+				ackString="SIGNAL_SUCCESS";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			else if (retSigVal==1)
+			{
+				ackString="SIGNAL_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+
+			break;	//case6 Signal ends	
+
+			case 7:	//Broadcast
+
+			//cout<<"Broadcast- Got string \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			
+			cvPassedValue="";
+			lockPassedValue="";
+			flagLockCV=0;
+
+			//Segregating the lock and cv id
+			for(unsigned int i=0;i<passedValue.size();i++)
+			{
+				if(passedValue[i]=='+')
+				{
+					flagLockCV=1;
+					continue;
+				}
+
+				if(flagLockCV==0)
+				{
+					cvPassedValue+=passedValue[i];
+				}
+				else
+				{
+					lockPassedValue+=passedValue[i];
+				}
+			}
+			//cout<<"Signal- Got CVIndex \""<<cvPassedValue<<"\" and LockIndex \""<<lockPassedValue<<"\""<<endl;
+
+			//converting lock id and cv id to integers
+			lockIndex=atoi(lockPassedValue.c_str());
+			cvIndex=atoi(cvPassedValue.c_str());
+			
+			int returnBroadcast;
+			while((cv[cvIndex]->conditionQueue->IsEmpty())==FALSE)
+			{
+				printf("\nBroadcast: CV Queue Not Empty..so signalling one.. \n");
+				returnBroadcast=funcSignal(lockIndex, cvIndex, addressInformation);
+				if(returnBroadcast != 2)
+					break;
+			}
+			
+			if(returnBroadcast != 2)
+				ackString="BROADCAST_FAILURE";	
+			else
+				ackString="BROADCAST_SUCCESS";
+			
+			funcSend(inPktHdr.from, inMailHdr.from, ackString);
+
+			break;	//case7 Broadcast ends
+
+			case 8:		//delete lock
+
+			//cout<<"DeleteLock- Got LockIndex \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			int lockToBeDeletedIndex=atoi(passedValue.c_str());
+
+			int retDeleteLock=funcDeleteLock(lockToBeDeletedIndex);
+
+			if(retDeleteLock==1)
+			{
+				ackString="DELETE_REQUEST_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			else if (retDeleteLock==0)
+			{
+				ackString="DELETE_REQUEST_SUCCESS";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+
+			break;		//end of delete lock
+
+			case 9:		//delete cv
+
+			//cout<<"DeleteCV- Got CVIndex \""<<passedValue<<"\" from "<<inPktHdr.from<<", box "<<inMailHdr.from<< endl;
+			int cvToBeDeletedIndex=atoi(passedValue.c_str());
+
+			int retDeleteCV=funcDeleteCV(cvToBeDeletedIndex);
+
+			if(retDeleteCV==1)
+			{
+				ackString="DELETE_CV_REQUEST_FAILURE";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+			else if (retDeleteCV==0)
+			{
+				ackString="DELETE_CV_REQUEST_SUCCESS";
+				funcSend(inPktHdr.from, inMailHdr.from, ackString);
+			}
+
+			break;		//end of delete cv
+		}
+   }
+    // Then we're done!
+	interrupt->Halt();
+
+}
+
+
+int funcCreateLock(string passedValue)
+{
+	//Search for that lock name in the database of locks
+	for (int i=0;i<nextServerLockLocation ;i++ )
+	{
+		if(lock[i] != NULL)
+		{
+			if (lock[i]->name==passedValue)
+			{
+				lock[i]->countOfCreateLock++;
+				cout<<"CreateLock- The Lock by name '"<<passedValue<<"' already Exists. The index being returned is '"<<i<<"'\n";
+				return i;
+			}
+		}
+	}
+
+	//Create Lock actually... object creation
+	if (nextServerLockLocation >= MAX_LOCKS)
+	{
+		printf("\nERROR:: CreateLock- Max locks limit reached\n");
+		return -1;
+	}
+	else
+	{
+		lock[nextServerLockLocation]=new ServerLock(passedValue);
+
+		
+		cout<<"\nCreateLock- New Lock is created by the name '"<<lock[nextServerLockLocation]->name<<"' at index "<<nextServerLockLocation<<endl;
+		fflush(stdout);
+	}
+	
+	//Increment the counter for next lock creation
+	nextServerLockLocation++;
+	//return the index of the created lock
+	return nextServerLockLocation-1;
+}
+
+int funcCreateCV(string passedValue)
+{
+
+	//Search for that cv name in the database of CVs
+	for (int i=0;i<nextServerCVLocation ;i++ )
+	{
+		if(cv[i] != NULL)
+		{
+			if (cv[i]->name==passedValue)
+			{
+				cv[i]->countOfCreateCV++;
+				cout<<"CreateCV- The CV by name '"<<passedValue<<"' already Exists. The index is being returned is "<<i<<endl;
+				return i;
+			}
+		}
+	}
+
+	//Create Lock actually... object creation
+	if (nextServerCVLocation >= MAX_CVS)
+	{
+		printf("\nERROR:: CreateCV- Max CV limit reached\n");
+		return -1;
+	}
+	else
+	{
+		cv[nextServerCVLocation]=new ServerCV(passedValue);
+		cout<<"\nCreateCV- New CV is created by the name '"<<cv[nextServerCVLocation]->name<<"' at index "<<nextServerCVLocation<<endl;
+
+		fflush(stdout);
+	}
+	
+	nextServerCVLocation++;
+	return nextServerCVLocation-1;
+}
+
+
+void funcSend(int inPktHdrFromVal, int inMailHdrFromVal, string ackString)
+{
+	PacketHeader outPktHdr, inPktHdr;
+    MailHeader outMailHdr, inMailHdr;
+	char *ack = (char*)ackString.c_str();
+	outPktHdr.to = inPktHdrFromVal;
+	outMailHdr.to = inMailHdrFromVal;
+	outMailHdr.from = 0;
+	//ack="ACQUIRE_FAILURE";
+	outMailHdr.length = strlen(ack) + 1;
+	bool success = postOffice->Send(outPktHdr, outMailHdr, ack);
+	if ( !success ) 
+	{
+		  printf("The postOffice Send failed. You must not have the other Nachos running. Terminating Nachos.\n");
+		  interrupt->Halt();
+	}
+}
+
+int funcAcquire(int lockToBeAcquiredIndex, ClientInfo *addressInformation)
+{
+	if(lockToBeAcquiredIndex<0 || lockToBeAcquiredIndex>=nextServerLockLocation)
+	{
+		printf("\nERROR:: Acquire- Invalid Index of the lock.. Not been created\n");
+		return 1;
+	}
+	else if(lock[lockToBeAcquiredIndex]==NULL)
+	{
+		printf("\nERROR:: Acquire- Invalid Lock Index..NULL value ..\n");
+		return 1;
+	}
+	else
+	{
+		if(lock[lockToBeAcquiredIndex]->lockState==0)	//lock is free
+		{
+			lock[lockToBeAcquiredIndex]->lockState=1;
+			lock[lockToBeAcquiredIndex]->ownerInfo=addressInformation;
+			//lock[lockToBeAcquiredIndex]->ownerInfo.mailboxNo=inPktHdr.from;
+			cout<<"The User has acquired the LockIndex: '"<<lockToBeAcquiredIndex<<"'"<<endl;
+			return 2;
+
+		}
+		//If he is already the owner
+		else if (lock[lockToBeAcquiredIndex]->ownerInfo->machineId==addressInformation->machineId && lock[lockToBeAcquiredIndex]->ownerInfo->mailboxNo==addressInformation->mailboxNo)
+		{
+			cout<<"\nERROR:: Acquire- You are already the owner.."<<endl;
+			return 3;
+		}
+		else
+		{
+			cout<<"The User trying to acquire LockIndex:"<<lockToBeAcquiredIndex<<"appended in the waiting queue.."<<endl;
+			lock[lockToBeAcquiredIndex]->waitingQueue->Append((void*)addressInformation);
+		}
+	}
+	return 0;
+}
+
+
+int funcRelease(int lockToBeReleasedIndex, ClientInfo *addressInformation)
+{
+	if(lockToBeReleasedIndex<0 || lockToBeReleasedIndex>=nextServerLockLocation)
+	{
+		cout<<"ERROR:: Release- LockIndex:"<<lockToBeReleasedIndex<<" is Invalid.. Has not been created"<<endl;
+		return 1;
+	}
+	else if(lock[lockToBeReleasedIndex]==NULL)
+	{
+		printf("\nERROR:: Release- Invalid Lock Index..NULL value ..\n");
+		return 1;
+	}
+	else
+	{
+		//If he is the Lock owner- success condition
+		bool userWaiting=false;
+		ClientInfo *waitingUserInformation;
+
+		if(lock[lockToBeReleasedIndex]->lockState==0)
+		{
+			printf("\nERROR: Release- LockIndex '%d' has not been Acquired\n",lockToBeReleasedIndex);
+			return 2;
+		}
+		else if (lock[lockToBeReleasedIndex]->ownerInfo->machineId==addressInformation->machineId && lock[lockToBeReleasedIndex]->ownerInfo->mailboxNo==addressInformation->mailboxNo)
+		{
+			//If the releasing user is the same who acquired it
+
+			if ((lock[lockToBeReleasedIndex]->waitingQueue->IsEmpty())==FALSE)
+			{
+				waitingUserInformation = (ClientInfo*)lock[lockToBeReleasedIndex]->waitingQueue->Remove();
+				lock[lockToBeReleasedIndex]->ownerInfo=waitingUserInformation;
+				//userWaiting=true;
+				printf("\nRelease- LockIndex '%d' released. Some User is in the waiting queue so giving lock to that User\n",lockToBeReleasedIndex);
+
+				//This is not removed as always a message is sent to the person waiting in the queue for lock
+				string ackString="ACQUIRE_SUCCESS";
+				funcSend(waitingUserInformation->machineId, waitingUserInformation->mailboxNo, ackString);	
+			}
+			else
+			{
+				lock[lockToBeReleasedIndex]->lockState=0;
+				lock[lockToBeReleasedIndex]->ownerInfo=NULL;
+				printf("\nRelease- LockIndex %d has been released.\n",lockToBeReleasedIndex);
+			}
+			
+			return 3;
+		}
+		else	//error condition
+		{
+			//If the releasing user is NOT the same who acquired it
+			cout<<"\nERROR:: Release- LockIndex:"<<lockToBeReleasedIndex<<" You are not the lock Owner."<<endl;
+			return 4;
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+
+int funcSignal(int lockIndex, int cvIndex, ClientInfo *addressInformation)
+{
+
+	if(lockIndex<0 || lockIndex>=nextServerLockLocation)
+	{
+		cout<<"ERROR - Signal :: LockIndex:"<<lockIndex<<" is Invalid .. Not been created"<<endl;
+		return 1;
+	}
+	if(cvIndex<0 || cvIndex>=nextServerLockLocation)
+	{
+		cout<<"ERROR - Signal :: CVIndex:"<<cvIndex<<" is Invalid .. Not been created"<<endl;
+		return 1;
+	}
+	if(lock[lockIndex]==NULL)
+	{
+		printf("\nERROR - Signal :: Invalid Lock ID..NULL value ..\n");
+		return 1;
+	}
+	if(cv[cvIndex]==NULL)
+	{
+		printf("\nERROR - Signal :: Invalid CV ID..NULL value ..\n");
+		return 1;
+	}
+	if (lock[lockIndex]->ownerInfo->machineId != addressInformation->machineId || lock[lockIndex]->ownerInfo->mailboxNo != addressInformation->mailboxNo)
+	{
+		cout<<"ERROR - Signal :: You are not the lock owner.."<<endl;		
+		return 1;
+	}
+
+	if ((cv[cvIndex]->conditionQueue->IsEmpty())==TRUE)		//Not an Error Condition, since first thread calling wait
+	{
+		 cout<<"ERROR - Signal :: No waiting threads in the queue.."<<endl;
+		 return 1;
+	}
+
+	if (cv[cvIndex]->waitingLock!=lockIndex)
+	{
+		cout<<"ERROR - Signal :: The waiting Lock is not same as the condition Lock.\n";
+		return 1;
+	}
+
+	//printf("\nSignal- taking out 1 userprogram from wait queue '%d'\n",cvIndex);
+	ClientInfo *waitingUserOnCVInformation = (ClientInfo*)cv[cvIndex]->conditionQueue->Remove();
+
+	//Letting waiting user Acquire the same lock with which I signalled him
+	int acquireOnSignal=funcAcquire(lockIndex, waitingUserOnCVInformation);
+
+	if(acquireOnSignal==0)
+	{
+		printf("\nSignal- User wanting lockIndex '%d' has been put in the lock waiting queue.\n",lockIndex);
+		return 2;
+
+	}
+	else
+	{
+		printf("\nSignal- ERROR:: User wanting lockIndex '%d' CANNOT be put on its waiting queue\n",lockIndex);
+		return 1;
+
+	}
+}
+
+
+int funcDeleteLock(int lockToBeDeletedIndex)
+{
+	if(lockToBeDeletedIndex<0 || lockToBeDeletedIndex>=nextServerLockLocation)
+	{
+		printf("\nERROR:: DeleteLock- Invalid Index of the lock.. Not been created\n");
+		return 1;
+	}
+	else if(lock[lockToBeDeletedIndex]==NULL)
+	{
+		printf("\nERROR:: DeleteLock- Invalid Lock Index..NULL value ..\n");
+		return 1;
+	}
+	else
+	{
+		lock[lockToBeDeletedIndex]->countOfCreateLock--;
+		if(lock[lockToBeDeletedIndex]->countOfCreateLock==0)	//lock is free
+		{
+			lock[lockToBeDeletedIndex]=NULL;
+			delete lock[lockToBeDeletedIndex];
+			cout<<"DeleteLock- The lock with LockIndex: '"<<lockToBeDeletedIndex<<"' has been deleted."<<endl;
+			//cout<<"DeleteLock- Checking...print name: '"<<lock[lockToBeDeletedIndex]->name<<"' printed."<<endl;
+		}
+		else
+		{
+			cout<<"DeleteLock- The lock with LockIndex: '"<<lockToBeDeletedIndex<<"' CANNOT be deleted as someone else might be using it."<<endl;
+		}
+
+	}
+	return 0;
+}
+
+
+int funcDeleteCV(int cvToBeDeletedIndex)
+{
+	if(cvToBeDeletedIndex<0 || cvToBeDeletedIndex>=nextServerCVLocation)
+	{
+		printf("\nERROR:: DeleteCV- Invalid Index of the cv.. Not been created\n");
+		return 1;
+	}
+	else if(cv[cvToBeDeletedIndex]==NULL)
+	{
+		printf("\nERROR:: DeleteCV- Invalid CV Index..NULL value ..\n");
+		return 1;
+	}
+	else
+	{
+		cv[cvToBeDeletedIndex]->countOfCreateCV--;
+		if(cv[cvToBeDeletedIndex]->countOfCreateCV==0)	//cv is free
+		{
+			cv[cvToBeDeletedIndex]=NULL;
+			delete cv[cvToBeDeletedIndex];
+			cout<<"DeleteCV- The CV with Index: '"<<cvToBeDeletedIndex<<"' has been deleted."<<endl;
+			//cout<<"DeleteLock- Checking...print name: '"<<lock[lockToBeDeletedIndex]->name<<"' printed."<<endl;
+		}
+		else
+		{
+			cout<<"DeleteCV- The CV with Index: '"<<cvToBeDeletedIndex<<"' CANNOT be deleted as someone else might be using it."<<endl;
+		}
+
+	}
+	return 0;
+}

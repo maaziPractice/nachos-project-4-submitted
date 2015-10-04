@@ -1,0 +1,4467 @@
+
+................................................................................................................................................
+
+	Title:  Writeup for Project 4, Fall 2011   
+
+	Date:  11/23/2011
+
+	Group Num 16 :  Name            		Email            		Student ID
+				
+			Shubham Agarwal       		agarwal1@usc.edu      		3964-2119-54
+			Mudit Sethi         		muditset@usc.edu      		9411-8475-19      
+			Mayur Raleraskar        	ralerask@usc.edu      		4659-8298-15
+
+................................................................................................................................................
+
+................................................................................................................................................
+I. REQUIREMENTS.
+................................................................................................................................................
+
+Project 4 has two parts & an extra credit.
+
+
+_____________________________________________________________________________________
+
+Part 1
+
+In Part 1 of project 4, we are to implement all the entities from the project Movie Theater Simulation. 
+We are to do this in such a way that all entities of Movie Theater (customer, head customer, ticket clerk, concession clerk, ticket taker, manager & movie technician) work together across Nachos clients. 
+It is the server's responsibility to connect the various entities together. 
+User programs do not to know anything about the fact that remote procedure calls are being used. 
+In addition, Nachos clients do not directly talk to each other. All client messages are to go to a Nachos server. 
+The server connects the clients - and the user programs. 
+We have used the Exec system call to create all entities. The Fork system call is not used.
+
+We have used the system calls that we created in project 3 part 3 in our distributed simulation.
+For part 1, we only have 1 server, like project 3 part 3.
+Each instance of Nachos that is running user programs is to now be able to run up to 100 user programs simultaneously.
+We are not assigning mailbox numbers to threads as they are created. Mailbox numbers are not hardcoded.
+
+
+_____________________________________________________________________________________
+
+Part 2 of project 4 is about Distributed Servers.
+
+We have changed the server code to have 5 servers working together in a group. Each server can receive a request from any client.
+The client Nachos kernels randomly generates a server machine ID for each request message they send.
+Each of the servers will have their own Lock, CV, and MV table. Servers only store the Locks/CVs/MVs that they create.
+This means that all the servers together will contain the entire Lock/CV/MV state for the simulation.
+No server has the complete state of the simulation.
+When a server receives a client request message, if it does not have that entity in its table then it immediately forwards to other servers with timestamp included in the message. 
+Servers must process server messages in timestamp order (only for Create Lock/CV/MV).
+
+
+_____________________________________________________________________________________
+
+Extra Credit in project 4 is about lost clients.
+
+We have implemented an algorithm to determine which user program should receive ownership of a lock when the user program that had the lock has failed (terminated with a Control-C or Exits with the Exit system call).
+We have 5 user programs. They can be single-threaded, one per client Nachos instance.
+Server detects when a user program, that owns a lock, has died.
+In Nachos, we do a postOffice->Send() to determine that the dead Nachos instance has died or not.
+We determine this by the return value of send, postOffice->Send() returns false if the send fails.
+After determining, the server gives the lock to the first waiting thread, or makes the lock available if no thread is waiting.
+
+
+
+................................................................................................................................................
+II. Assumptions.
+................................................................................................................................................
+
+1. Memory management code is reverted back to project 2. Hence NumPhysPages in machine.h is set to 10240.
+2. Server to server thread has mail box id 1. Server to client thread has mail box id 1. Timer thread has mail box id 1.
+3. For extra credit (part 3) the client lsitens for ping requests on mail box number 99.
+4. Part3 runs on single server. Suitable testcases to show its working are made.
+5. In Part2, the requests from client are send to Servers randomly from 1 to 5, the value given by parameter ('-sc').
+6. The machine numbers of servers are always from 0 to 'totalServers -1'. For e.g. if total servers value specified by -sc is '5' then machine ids of all servers will be 0-4.
+7. All Movie Theater Simulation processes, can be executed in any order (e.g. first manager can be executed before customers or vice-versa). Just that the servers will have to be started before the client simulation files.
+8. Every Movie Theater Simulation client process executes creation of required lock, CVs and MVs. At the server Side, only the first Client actually creates it, for others its just the check on that name and the 'success' value is returned.
+9. Every other server receives a DYH Request created by 1 server and they reply to it. No statement is printed on console to show this operation. Even if the server is started and no statement is printed till the end of execution of a testcase, then it shows that by random generation, no request has been sent to that server, but then too it is replying to the DYH requests of other servers.
+10. We have done a gmake clean from code dir so as to delete .o files. If there is an issue with compiling, do a gmake from code dir.
+To run all parts of the project only network & test dir need to be gmake'd. Else gmake can also be done from code dir.
+
+11. Following things are to be considered before running project 4 part 2:
+
+a. Movie Simulation successfully runs for 28 Customers (7 groups having 4 members each). 
+b. There are 5 Ticket clerks (Exec'd from file - simulatorExecTC).
+c. There are 5 Concession clerks  (Exec'd from file - simulatorExecCC).
+d. There are 3 Ticket takers  (Exec'd from file - simulatorExecTT).
+e. Number of groups are 7.
+f. Group size is 4 (including head customer are Exec'd from file - simulatorExecCustHead).
+g. There is 1 Technician & 1 Manager (Exec'd from file - simulatorExecManagerTech).
+
+
+
+................................................................................................................................................
+III. Design:
+................................................................................................................................................
+
+_____________________________________________________________________________________
+
+Part I: Implementation of Movie Theater Simulation as separate Nachos Clients.
+
+We have implemented each entity in Movie Theater Simulation as a seperate nachos client.
+The seven entities (customer, head customer, ticket clerk, concession clerk, ticket taker, manager & movie technician) in Movie Theater simulation is now split into seven seperate files.
+Uptil now, only system calls were used for the Movie Theater Simulation.
+For project 4, the simulation needs to run with RPC's implemented in project 3.
+Every entity will seperately create all the required locks and condition variables.
+Also the monitor variables are now to be implemented as RPC's defined in project 3 part 3.
+Now, each entity can be run as a seperate nachos client process and the synchronization between them is achieved through a nachos server using RPC's
+
+
+_____________________________________________________________________________________
+
+Part II: Implementation Distributed Servers.
+
+Glossary
+DYH :do u have ?? kind of requests
+
+For distributed system i.e., with multiple servers, each server will have 2 threads 
+1-for serving client requests(which also sends out DYH requests)
+	receiving on mailbox 0, called as SC thread
+	adding the requests to pending queue,so that it can act on it when it receives replies from all other servers of distrubuted
+	system
+	
+2-other one for serving requests(mainlly DYH kind of) of other servers called SC thread
+  which also receives replies to its own DYH
+ If a server does not have an entity say a lock, it sends out DYH(do u have the entity) requeests to other servers.
+ If it has all the entities to serve a request of client then it serves the requets independently
+ In case of wait,signal & broadcast kind of requests from the client, the request is forwarded to & handled by the server who has the CV
+
+
+Create Lock/CV/MV:
+
+
+1. Whenever a new Create request comes, the server checks for that name in its tables, if found, the success is returned to user, if the request isn't found on that server, he sends a DYH message to every other server and puts it in the pending queue.
+
+2. Total Ordering has been used for tie breaking when more than 1 server receives the create request for the same name of same entity at the same time. 
+
+Server to Server Thread (Receiving the DYH reply)
+
+1. Receive a DYH Reply.
+2. Extract the name and type.
+3. Look for the matching entry in pending request table.
+ If not found, just return nothing to do.
+4. If found in table, If reply is a yes, handle the request and remove entry from the table.
+5. If reply is a no, increment no. of replies.
+6. Compare number of replies to numberOfServers-1. If less, just return- nothing to do.
+7. If they match, this entity does not exist. Then CREATE it.
+8. If there are DYH msgs in pending DYH msgs, send a reply to each one, If the received DYH reply was Yes, reply No.
+9. If the received DYH reply was the Last No, reply Yes.
+
+
+Server to Server Thread (Receiving the DYH message)
+
+1. Receive a DYH msg.
+2. Look in the appropriate table. If found, reply yes to the corresponding server.
+3. If not found, look in the pending request table, if not found reply No.
+
+4. If found, compare my DYH timestamp to the received Timestamp.
+5. If my Timestamp is later, reply No. If earlier, I queue the DYH Message.
+ 
+ 
+Acquire:
+server check to see whether it has the lock
+if it has it performs normal acquire as in Project 3 part 3
+else it forwards the requests to server who replies yes to DYH requests for this lock
+
+Release:
+server check to see whether it has the lock
+if it has it performs normal release as in Project 3 part 3
+else it forwards the requests to server who replies yes to DYH requests for this lock
+
+Wait:
+Server checks to see if it has the CV & the lock, if it does it performs normal wait operation as in Project 3 part 3
+Otherwise Signal operation is forwarded to server who owns the CV, 
+it does remote release of lock of monitor for waiter who has called wait by sending special DYH signal to all other servers.
+The one who has lock replie yes after doing lock ownership checks for waiter & releasing the lock
+
+Signal:
+Server checks to see if it has the CV & the lock, if it does it performs normal signal operation as in Project 3 part 3
+Otherwise Signal operation is forwarded to server who owns the CV, 
+it does remote acquiration of lock of monitor for waiter who has been signalled by this Signal,for this it sends DYH signal to all other servers.
+The one who has lock replies yes after doing lock ownership checks for signaller.
+
+Braodcast:
+Server checks to see if it has the CV & the lock, if it does it performs normal braodcast operation as in Project 3 part 3
+Otherwise Braodcast operation is forwarded to server who owns the CV, 
+it does remote acquiration of lock of monitor for all waiter who has been signalled by this Braodcast,for this it sends DYH signal to all other servers.
+The one who has lock replies yes after doing lock ownership checks for Braodcaster.
+
+Same kind of logic goes for get & set MV
+
+_____________________________________________________________________________________
+
+Part III: Extra Credit - Handling Lost Clients.
+
+The server will now not be single threaded. For part 1, server worked by having a single thread.
+For part 2, we require two threads, one for handling client requests & one for handling intercommunication between multiple servers.
+For extra credit, we requrie another thread i.e. the timer thread which uses the timer constructor defined in timer.h & timer.cc.
+This timer thread calls the timer constructor passing our ping function to it. This makes continuous calling of ping function & we need to exit the server (do Control-c) for it & the server to stop.
+This ping function keeps pinging the clients at an interval of 5 seconds. We need this interval of 5 seconds & cannot let it ping continuously.
+If we start sending out ping messages every time the timer fires for this thread, we are going to kill nachos.
+There is a race condition in the n/w, if we send messages too fast, coz of opening a unix file & closing it.
+Then eventually, unix gets confused & messages appear to be sent (Send returns true), but they never show up in the socket file.
+So, we cannot send messages blindly. Thus, in this timer function, we grab the unix clock (the aludra clock) & look for a 5 second delay.
+We have implemented this timed arithmetic. Otherwise, if we let it run too long, nachos is going to get confused.
+So, we ping the clients to see if any user program died taking a lock with it.
+If it is so, we assign the lock to its next waiting member or make the lock free if there is no waiting member.
+
+
+...............................................................................................................................................
+IV. Implementation:
+................................................................................................................................................
+
+
+...............................................................................................................................................
+
+
++ Files Modified:
+
+. 	/code/userprog/exception.cc
+.	/code/userprog/syscall.h
+.	/code/threads/system.cc
+.	/code/threads/system.h
+.	/code/test/start.s
+.	/code/test/Makefile
+. 	/code/network/nettest.cc
+.	/code/machine/machine.h
+.	/code/network/post.cc
+.	/code/Makefile.common
+.	/code/userprog/progtest.cc
+.	/code/machine/network.cc
+
+
+...............................................................................................................................................
+
++ Files added:
+
+_____________________________________________________________________________________
+
+- in test directory
+
+.	ticketClerk
+.	customerHead
+.	simulatorExecTC
+.	simulatorExecCustHead
+.	concessionClerk
+.	simulatorExecCC
+.	customer
+.	ticketTaker
+.	simulatorExecTT
+.	Manager
+.	simulatorExecManagerTech
+.	Technician
+.	tc0_1.c
+.	tc0_2.c
+.	tc0_3.c
+.	tc0_4.c
+.	tc0_5.c
+.	tcase1
+.	tcase2
+.	tcase3_1
+.	tcase3_2
+.	tcase4_1
+.	tcase4_2
+.	tcase5_1
+.	tcase5_2
+.	tcase6
+.	tcase7_1
+.	tcase7_2
+.	tcase7_3
+.	tcase8_1
+.	tcase8_2
+.	MultiCreates
+.	MultiCreatesFile
+.	action.cc
+.	action.h
+.	nettest1.cc
+.	nettest2.cc
+.	onettest.cc
+.	part3nettest.cc
+
+
+
+_____________________________________________________________________________________
+
+-in code directory
+
+a) WRITEUP
+b) GROUPNAME
+
+
+
+
+...............................................................................................................................................
+
++Data Structures added, and the file they were added to
+
+- in File: /network/action.h
+
+struct DYHRq
+{
+	unsigned int timestamp;
+	char nameOfEntity[25];
+	short int opcode;
+	bool DIHEntity; // destination server replies like do I have it??
+	bool ReqRep;
+	short int CMachID;
+	short int CmailBOX;
+};
+
+class PendingQElement
+{
+public:
+	List* clientInfoQ;
+	DYHRq* myDYHRq;
+    string origCliMsg; // can be use for fwding request to apt server
+    bool exactOneYes;
+    int ownerServer;
+    int totalCorreResponses;
+    int cvIndex;
+    List* pendingDYHCreateMsgs;
+	int fMachID;
+	int fMailBoxNum;
+
+    PendingQElement();
+};
+
+map< string,PendingQElement* > PendingQ;
+map<string,PendingQElement*>::iterator PendingQiterator;
+
+...............................................................................................................................................
+
++Data Structures modified, and the file they were added to.
+-None
+
+...............................................................................................................................................
+
++Functions added and in which file.
+_____________________________________________________________________________________
+
+in /network/action.cc
+void StructToString(char* DYHRqStructPtr,char* destbuf);
+void StringToStruct(char* DYHRqStructPtr,char* destbuf);
+string GenerateKey(string nameOfEntityPtr,OpCode opcode);
+void SendAsIfFromClient(PendingQElement* pendQE);
+void SendErrorToClients(PendingQElement* pendQE);
+void SendGetMVErrorToClients(PendingQElement* pendQE);
+int lookUpforLock(string lockName);
+int lookUpforCV(string cvName);
+int lookUpforMVCreate(string mvName);
+int lookUpforMV(string passedValue);
+void  funcSetMV(int mvIndex, int mvIndexArray, int mvValueAssign, ClientInfo *addressInformation);
+void SendDYH(DYHRq* myDYHRq);
+void ReplyToDYH(int farSerMachiID,DYHRq* myDYHRq);
+void funcSend(int inPktHdrFromVal, int inMailHdrFromVal, string ackString);
+int funcCreateCV(string passedValue, ClientInfo *addressInformation);
+int funcCreateLock(string passedValue, ClientInfo *addressInformation);
+int funcAcquire(string lockToBeAcquiredName, ClientInfo *addressInformation);
+int funcRelease(string lockToBeReleasedName, ClientInfo *addressInformation);
+int funcWait(int lockIndex, int cvIndex, ClientInfo *addressInformation);
+void initialiseDSS();
+void SendAsIfFromSpecClient(ClientInfo* clientInfo,int farServID,char* opcode, char* entityName);
+int funcSignal(int lockIndex, int cvIndex, ClientInfo *addressInformation);
+int funcBroadcast(int lockIndex, int cvIndex, ClientInfo *addressInformation);
+void myServerFunc1();
+void HandleCreateLock(PendingQElement* pendQE);
+void HandleCreateCV(PendingQElement* pendQE);
+void HandleCreateMV(PendingQElement* pendQE);
+void SendCreateMessageToClients(PendingQElement* pendQE, string ackString);
+int funcCreateMV(string passedValue, int mvArraySizeInt, ClientInfo *addressInformation);
+
+_____________________________________________________________________________________
+
+- in /network/nettest2.cc
+void ServeReqeusts(int farSerMachiID,DYHRq* msgObj);
+void UpdatePendQ(int farSerMachiID,DYHRq* msgObj);
+void ReadSSMailBOX();
+void ServePendingQ();
+void ServerToServer();
+
+_____________________________________________________________________________________
+
+- in /network/nettest1.cc
+void AddToPendingQ(string passedValue,char* buffer,short int opcode,ClientInfo* addressInformation);
+void CurrentRequestServent();
+
+_____________________________________________________________________________________
+
+- in /network/part3nettest.cc
+void myServerFunc3();
+
+
+...............................................................................................................................................
+V. Testing.
+...............................................................................................................................................
+
+
+-------------------------------
+Test cases for part I - Running the test cases with a single server.
+-------------------------------
+
+................................................................................................................................................
++ How to test
+................................................................................................................................................
+
+Files:
+
+01. tcase1
+02. tcase2
+03. tcase3_1
+04. tcase3_2
+05. tcase4_1
+06. tcase4_2
+07. tcase5_1
+08. tcase5_2
+09. tcase6
+10. tcase7_1
+11. tcase7_2
+12. tcase7_3
+13. tcase8_1
+14. tcase8_2
+15.	ticketClerk
+16.	customerHead
+17.	simulatorExecTC
+18.	simulatorExecCustHead
+19.	concessionClerk
+20.	simulatorExecCC
+21.	customer
+22.	ticketTaker
+23.	simulatorExecTT
+24.	Manager
+25.	simulatorExecManagerTech
+26.	Technician
+27.	onettest.cc
+
+
+All the following test cases are basically test cases created for Project 4 Part 2 & will run for Part 1 as well.
+The output will be same when run with distributed servers.
+Kindly refer to the Part 2 Testing - Test Output section for appropriate outputs.
+
+___________________________________________
+
+Test Case 1
+
+Open 2 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase1 -sc 1 -m 1
+
+___________________________________________
+
+Test Case 2
+
+Open 2 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase2 -sc 1 -m 1
+
+___________________________________________
+
+Test Case 3
+
+Open 3 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase3_1 -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/tcase3_2 -sc 1 -m 2
+
+___________________________________________
+
+Test Case 4
+
+Open 3 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase4_1 -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/tcase4_2 -sc 1 -m 2
+
+___________________________________________
+
+Test Case 5
+
+Open 3 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase5_1 -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/tcase5_2 -sc 1 -m 2
+
+___________________________________________
+
+Test Case 6
+
+Open 2 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase6 -sc 1 -m 1
+
+___________________________________________
+
+Test Case 7
+
+Open 4 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase7_1 -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/tcase7_2 -sc 1 -m 2
+
+On the fourth nachos instance:
+nachos -x ../test/tcase7_3 -sc 1 -m 3
+___________________________________________
+
+Test Case 8
+
+Open 3 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/tcase8_1 -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/tcase8_2 -sc 1 -m 2
+
+___________________________________________
+
+Test Case 9 - Movie Theater
+
+Open 6 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 1 -m 0
+
+On the second nachos instance:
+nachos -x ../test/simulatorExecTC -sc 1 -m 1
+
+On the third nachos instance:
+nachos -x ../test/simulatorExecCustHead -sc 1 -m 2
+
+On the fourth nachos instance:
+nachos -x ../test/simulatorExecCC -sc 1 -m 3
+
+On the fifth nachos instance:
+nachos -x ../test/simulatorExecTT -sc 1 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/simulatorExecManagerTech -sc 1 -m 5
+
+___________________________________________
+
+
+
+................................................................................................................................................
++ Test Output
+................................................................................................................................................
+
+
+//////////
+Test Case 1 - 8: Refer to output for test cases of part 2.
+//////////
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 9 - Movie Theater
+//////////
+
+
+nachos -x ../test/simulatorExecTC -sc 1 -m 1:
+
+ Process 5 - TicketClerk[0] has no one in line. I am available for a customer.
+
+ Process 3 - TicketClerk[1] has no one in line. I am available for a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 4 - TicketClerk[3] has no one in line. I am available for a customer.
+
+ Process 1 - TicketClerk[4] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has a line length=1 and is signaling a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has no one in line. I am available for a customer.
+Machine halting!
+
+_________________________________________________________________________
+
+nachos -x ../test/simulatorExecCustHead -sc 1 -m 2:
+
+ Process 20 - Customer [0] in Group [0] has entered the movie theater.
+
+ Process 20 - Customer[0] of group[0] is waiting for the HeadCustomer.
+
+ Process 18 - Customer [1] in Group [0] has entered the movie theater.
+
+ Process 18 - Customer[1] of group[0] is waiting for the HeadCustomer.
+
+ Process 26 - Customer [2] in Group [0] has entered the movie theater.
+
+ Process 26 - Customer[2] of group[0] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in Group[0] is getting in TicketClerk line[0]
+
+ Process 5 - Customer[3] in Group[0] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 4 - Customer[4] in Group[1] is getting in TicketClerk line[2]
+
+ Process 13 - Customer [6] in Group [1] has entered the movie theater.
+
+ Process 13 - Customer[6] of group[1] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 14 - Customer [7] in Group [1] has entered the movie theater.
+
+ Process 14 - Customer[7] of group[1] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 24 - Customer [8] in Group [1] has entered the movie theater.
+
+ Process 24 - Customer[8] of group[1] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in Group[0] is leaving TicketClerk[0]
+
+ Process 22 - Customer [9] in Group [2] has entered the movie theater.
+
+ Process 22 - Customer[9] of group[2] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is getting in TicketClerk line[0]
+
+ Process 4 - Customer[4] in Group[1] is leaving TicketClerk[2]
+
+ Process 20 - Customer[0] in group[0] wants 1 popcorn and 1 soda.
+
+ Process 20 - Customer[0] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+ Process 23 - Customer [11] in Group [2] has entered the movie theater.
+
+ Process 23 - Customer[11] of group[2] is waiting for the HeadCustomer.
+
+ Process 18 - Customer[1] in group[0] wants 1 popcorn and 0 soda.
+
+ Process 18 - Customer[1] in Group[0] has 1 popcorn and 0 soda request from a group member
+
+ Process 13 - Customer[6] in group[1] wants 1 popcorn and 0 soda.
+
+ Process 13 - Customer[6] in Group[1] has 1 popcorn and 0 soda request from a group member
+
+ Process 17 - Customer [12] in Group [2] has entered the movie theater.
+
+ Process 26 - Customer[2] in group[0] wants 1 popcorn and 1 soda.
+
+ Process 26 - Customer[2] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+ Process 17 - Customer[12] of group[2] is waiting for the HeadCustomer.
+
+ Process 14 - Customer[7] in group[1] wants 1 popcorn and 1 soda.
+
+ Process 14 - Customer[7] in Group[1] has 1 popcorn and 1 soda request from a group member
+
+ Process 20 - Customer[0] of group[0] is waiting for the HeadCustomer.
+
+ Process 10 - Customer [13] in Group [3] has entered the movie theater.
+
+ Process 24 - Customer[8] in group[1] wants 0 popcorn and 0 soda.
+
+ Process 24 - Customer[8] in Group[1] has 0 popcorn and 0 soda request from a group member
+
+ Process 18 - Customer[1] of group[0] is waiting for the HeadCustomer.
+
+ Process 10 - Customer[13] of group[3] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in group[0] wants 1 popcorn and 0 soda.
+
+ Process 13 - Customer[6] of group[1] is waiting for the HeadCustomer.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketClerk line[0]
+
+ Process 11 - Customer [14] in Group [3] has entered the movie theater.
+
+ Process 26 - Customer[2] of group[0] is waiting for the HeadCustomer.
+
+ Process 14 - Customer[7] of group[1] is waiting for the HeadCustomer.
+
+ Process 11 - Customer[14] of group[3] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in group[1] wants 1 popcorn and 1 soda.
+
+ Process 19 - Customer [15] in Group [3] has entered the movie theater.
+
+ Process 24 - Customer[8] of group[1] is waiting for the HeadCustomer.
+
+ Process 19 - Customer[15] of group[3] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] is getting in ConcessionClerk Line[0]
+
+ Process 1 - Customer[5] in Group[2] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 21 - Customer [16] in Group [4] has entered the movie theater.
+
+ Process 21 - Customer[16] of group[4] is waiting for the HeadCustomer.
+
+ Process 12 - Customer [18] in Group [4] has entered the movie theater.
+
+ Process 12 - Customer[18] of group[4] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is leaving TicketClerk[0]
+
+ Process 2 - Customer[17] in Group[4] is getting in TicketClerk line[2]
+
+ Process 8 - Customer [20] in Group [4] has entered the movie theater.
+
+ Process 2 - Customer[17] in Group[4] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 8 - Customer[20] of group[4] is waiting for the HeadCustomer.
+
+ Process 22 - Customer[9] in group[2] wants 1 popcorn and 0 soda.
+
+ Process 22 - Customer[9] in Group[2] has 1 popcorn and 0 soda request from a group member
+
+ Process 4 - Customer[4] in Group[1] is getting in ConcessionClerk Line[1]
+
+ Process 9 - Customer [22] in Group [5] has entered the movie theater.
+
+ Process 23 - Customer[11] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 23 - Customer[11] in Group[2] has 0 popcorn and 1 soda request from a group member
+
+ Process 9 - Customer[22] of group[5] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 17 - Customer[12] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 17 - Customer[12] in Group[2] has 0 popcorn and 1 soda request from a group member
+
+ Process 16 - Customer [23] in Group [5] has entered the movie theater.
+
+ Process 22 - Customer[9] of group[2] is waiting for the HeadCustomer.
+
+ Process 16 - Customer[23] of group[5] is waiting for the HeadCustomer.
+
+ Process 23 - Customer[11] of group[2] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] is leaving TicketClerk[2]
+
+ Process 1 - Customer[5] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 17 - Customer[12] of group[2] is waiting for the HeadCustomer.
+
+ Process 15 - Customer [24] in Group [5] has entered the movie theater.
+
+ Process 7 - Customer[19] in Group[5] is getting in TicketClerk line[0]
+
+ Process 15 - Customer[24] of group[5] is waiting for the HeadCustomer.
+
+ Process 21 - Customer[16] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 21 - Customer[16] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 12 - Customer[18] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 12 - Customer[18] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 28 - Customer [25] in Group [6] has entered the movie theater.
+
+ Process 28 - Customer[25] of group[6] is waiting for the HeadCustomer.
+
+ Process 8 - Customer[20] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 8 - Customer[20] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 1 - Customer[5] in Group[2] is getting in ConcessionClerk Line[2]
+
+ Process 25 - Customer [26] in Group [6] has entered the movie theater.
+
+ Process 21 - Customer[16] of group[4] is waiting for the HeadCustomer.
+
+ Process 25 - Customer[26] of group[6] is waiting for the HeadCustomer.
+
+ Process 12 - Customer[18] of group[4] is waiting for the HeadCustomer.
+
+ Process 27 - Customer [27] in Group [6] has entered the movie theater.
+
+ Process 3 - Customer[21] in Group[6] is getting in TicketClerk line[2]
+
+ Process 27 - Customer[27] of group[6] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in group[4] wants 1 popcorn and 1 soda.
+
+ Process 8 - Customer[20] of group[4] is waiting for the HeadCustomer.
+
+ Process 6 - Customer[10] in Group[3] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 6 - Customer[10] in Group[3] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 3 - Customer[21] in Group[6] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 6 - Customer[10] in Group[3] is leaving TicketClerk[0]
+
+ Process 3 - Customer[21] in Group[6] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 5 - Customer[3] in Group[0] is walking up to ConcessionClerk[0] to buy [4] popcorn and [2] soda.
+
+ Process 2 - Customer[17] in Group[4] is getting in ConcessionClerk Line[4]
+
+ Process 10 - Customer[13] in group[3] wants 0 popcorn and 1 soda.
+
+ Process 10 - Customer[13] in Group[3] has 0 popcorn and 1 soda request from a group member
+
+ Process 4 - Customer[4] in Group[1] is walking up to ConcessionClerk[1] to buy [3] popcorn and [2] soda.
+
+ Process 3 - Customer[21] in Group[6] is leaving TicketClerk[2]
+
+ Process 11 - Customer[14] in group[3] wants 1 popcorn and 0 soda.
+
+ Process 11 - Customer[14] in Group[3] has 1 popcorn and 0 soda request from a group member
+
+ Process 7 - Customer[19] in Group[5] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] in ConcessionClerk line[0] is paying[24] for food.
+
+ Process 2 - Customer[17] in Group[4] is walking up to ConcessionClerk[4] to buy [4] popcorn and [1] soda.
+
+ Process 19 - Customer[15] in group[3] wants 0 popcorn and 0 soda.
+
+ Process 19 - Customer[15] in Group[3] has 0 popcorn and 0 soda request from a group member
+
+ Process 10 - Customer[13] of group[3] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] in ConcessionClerk line[1] is paying[20] for food.
+
+ Process 28 - Customer[25] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 28 - Customer[25] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 11 - Customer[14] of group[3] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in Group[5] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 6 - Customer[10] in group[3] wants 1 popcorn and 1 soda.
+
+ Process 5 - Customer[3] in Group [0] is leaving ConcessionClerk[0]
+
+ Process 25 - Customer[26] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 25 - Customer[26] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 2 - Customer[17] in Group[4] in ConcessionClerk line[4] is paying[20] for food.
+
+ Process 19 - Customer[15] of group[3] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in Group[5] is leaving TicketClerk[0]
+
+ Process 4 - Customer[4] in Group [1] is leaving ConcessionClerk[1]
+
+ Process 27 - Customer[27] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 27 - Customer[27] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 5 - Customer[3] in Group[0] is getting in TicketTaker Line[0]
+
+ Process 28 - Customer[25] of group[6] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is getting in ConcessionClerk Line[0]
+
+ Process 25 - Customer[26] of group[6] is waiting for the HeadCustomer.
+
+ Process 9 - Customer[22] in group[5] wants 0 popcorn and 1 soda.
+
+ Process 9 - Customer[22] in Group[5] has 0 popcorn and 1 soda request from a group member
+
+ Process 2 - Customer[17] in Group [4] is leaving ConcessionClerk[4]
+
+ Process 3 - Customer[21] in group[6] wants 0 popcorn and 1 soda.
+
+ Process 27 - Customer[27] of group[6] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] is getting in TicketTaker Line[1]
+
+ Process 16 - Customer[23] in group[5] wants 1 popcorn and 1 soda.
+
+ Process 16 - Customer[23] in Group[5] has 1 popcorn and 1 soda request from a group member
+
+ Process 15 - Customer[24] in group[5] wants 0 popcorn and 0 soda.
+
+ Process 15 - Customer[24] in Group[5] has 0 popcorn and 0 soda request from a group member
+
+ Process 9 - Customer[22] of group[5] is waiting for the HeadCustomer.
+
+ Process 16 - Customer[23] of group[5] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in group[5] wants 0 popcorn and 0 soda.
+
+ Process 15 - Customer[24] of group[5] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] is getting in TicketTaker Line[2]
+
+ Process 6 - Customer[10] in Group[3] is getting in ConcessionClerk Line[0]
+
+ Process 5 - Customer[3] in Group[0] is leaving TicketTaker[0]
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 3 - Customer[21] in Group[6] is getting in ConcessionClerk Line[1]
+
+ Process 4 - Customer[4] in Group[1] is leaving TicketTaker[1]
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 5 - Customer[3] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 5 - Customer[3] of group[0] is sitting in a theater room seat.
+
+ Process 2 - Customer[17] in Group[4] is leaving TicketTaker[2]
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 3 - Customer[21] in Group[6] is walking up to ConcessionClerk[1] to buy [3] popcorn and [4] soda.
+
+ Process 20 - Customer[0] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 20 - Customer[0] of group[0] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group[5] is getting in ConcessionClerk Line[4]
+
+ Process 1 - Customer[5] in Group[2] is walking up to ConcessionClerk[0] to buy [1] popcorn and [3] soda.
+
+ Process 18 - Customer[1] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 18 - Customer[1] of group[0] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group[6] in ConcessionClerk line[1] is paying[28] for food.
+
+ Process 7 - Customer[19] in Group[5] is walking up to ConcessionClerk[4] to buy [1] popcorn and [2] soda.
+
+ Process 26 - Customer[2] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 26 - Customer[2] of group[0] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] in ConcessionClerk line[0] is paying[16] for food.
+
+ Process 4 - Customer[4] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 4 - Customer[4] of group[1] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group [6] is leaving ConcessionClerk[1]
+
+ Process 7 - Customer[19] in Group[5] in ConcessionClerk line[4] is paying[12] for food.
+
+ Process 2 - Customer[17] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 2 - Customer[17] of group[4] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group [2] is leaving ConcessionClerk[0]
+
+ Process 3 - Customer[21] in Group[6] is getting in TicketTaker Line[0]
+
+ Process 13 - Customer[6] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 13 - Customer[6] of group[1] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group [5] is leaving ConcessionClerk[4]
+
+ Process 14 - Customer[7] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 14 - Customer[7] of group[1] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] is getting in TicketTaker Line[1]
+
+ Process 24 - Customer[8] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 24 - Customer[8] of group[1] is sitting in a theater room seat.
+
+ Process 21 - Customer[16] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 21 - Customer[16] of group[4] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group[5] is getting in TicketTaker Line[2]
+
+ Process 12 - Customer[18] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 12 - Customer[18] of group[4] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is walking up to ConcessionClerk[0] to buy [2] popcorn and [2] soda.
+
+ Process 3 - Customer[21] in Group[6] is leaving TicketTaker[0]
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 8 - Customer[20] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 8 - Customer[20] of group[4] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 3 - Customer[21] of group[6] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] in ConcessionClerk line[0] is paying[16] for food.
+
+ Process 28 - Customer[25] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 28 - Customer[25] of group[6] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] is leaving TicketTaker[1]
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 25 - Customer[26] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 25 - Customer[26] of group[6] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group [3] is leaving ConcessionClerk[0]
+
+ Process 27 - Customer[27] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 27 - Customer[27] of group[6] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 1 - Customer[5] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketTaker Line[0]
+
+ Process 7 - Customer[19] in Group[5] is leaving TicketTaker[2]
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 22 - Customer[9] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 22 - Customer[9] of group[2] is sitting in a theater room seat.
+
+ Process 23 - Customer[11] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 23 - Customer[11] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is rejected by TicketTaker[0]. Going to the lobby.
+
+ Process 17 - Customer[12] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 17 - Customer[12] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is in the lobby.
+
+ Process 7 - Customer[19] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 7 - Customer[19] of group[5] is sitting in a theater room seat.
+
+ Process 9 - Customer[22] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 9 - Customer[22] of group[5] is sitting in a theater room seat.
+
+ Process 16 - Customer[23] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 16 - Customer[23] of group[5] is sitting in a theater room seat.
+
+ Process 15 - Customer[24] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 15 - Customer[24] of group[5] is sitting in a theater room seat.
+
+ Process 20 - Customer[0] of group[0] is getting out of a theater room seat.
+
+ Process 5 - HeadCustomer[3] of group[0] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] is getting out of a theater room seat.
+
+ Process 26 - Customer[2] of group[0] is getting out of a theater room seat.
+
+ Process 4 - HeadCustomer[4] of group[1] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] is waiting for the group to form.
+
+ Process 13 - Customer[6] of group[1] is getting out of a theater room seat.
+
+ Process 2 - HeadCustomer[17] of group[4] is waiting for the group to form.
+
+ Process 14 - Customer[7] of group[1] is getting out of a theater room seat.
+
+ Process 20 - Customer[0] of group[0] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] is getting out of a theater room seat.
+
+ Process 21 - Customer[16] of group[4] is getting out of a theater room seat.
+
+ Process 26 - Customer[2] of group[0] is waiting for the group to form.
+
+ Process 12 - Customer[18] of group[4] is getting out of a theater room seat.
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 8 - Customer[20] of group[4] is getting out of a theater room seat.
+
+ Process 13 - Customer[6] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] is getting out of a theater room seat.
+
+ Process 3 - HeadCustomer[21] of group[6] is waiting for the group to form.
+
+ Process 21 - Customer[16] of group[4] is waiting for the group to form.
+
+ Process 25 - Customer[26] of group[6] is getting out of a theater room seat.
+
+ Process 14 - Customer[7] of group[1] is waiting for the group to form.
+
+ Process 27 - Customer[27] of group[6] is getting out of a theater room seat.
+
+ Process 28 - Customer[25] of group[6] is waiting for the group to form.
+
+ Process 12 - Customer[18] of group[4] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] is getting out of a theater room seat.
+
+ Process 1 - HeadCustomer[5] of group[2] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] is waiting for the group to form.
+
+ Process 23 - Customer[11] of group[2] is getting out of a theater room seat.
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 25 - Customer[26] of group[6] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is getting out of a theater room seat.
+
+ Process 9 - Customer[22] of group[5] is getting out of a theater room seat.
+
+ Process 7 - HeadCustomer[19] of group[5] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] is waiting for the group to form.
+
+ Process 16 - Customer[23] of group[5] is getting out of a theater room seat.
+
+ Process 27 - Customer[27] of group[6] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] is waiting for the group to form.
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 15 - Customer[24] of group[5] is getting out of a theater room seat.
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 23 - Customer[11] of group[2] is waiting for the group to form.
+
+ Process 9 - Customer[22] of group[5] is waiting for the group to form.
+
+ Process 16 - Customer[23] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 20 - Customer[0] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] is waiting for the group to form.
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 13 - Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 14 - Customer[7] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 5 - HeadCustomer[3] of group[0] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 4 - HeadCustomer[4] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 25 - Customer[26] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 27 - Customer[27] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 21 - Customer[16] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 12 - Customer[18] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 3 - HeadCustomer[21] of group[6] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 2 - HeadCustomer[17] of group[4] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 23 - Customer[11] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 17 - Customer[12] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 18 - Customer[1] of group[0] is waiting for the group to form.
+
+ Process 1 - HeadCustomer[5] of group[2] is waiting for the group to form.
+
+ Process 9 - Customer[22] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 20 - Customer[0] of group[0] is waiting for the group to form.
+
+ Process 15 - Customer[24] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] is waiting for the group to form.
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 18 - Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 20 - Customer[0] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 7 - HeadCustomer[19] of group[5] is waiting for the group to form.
+
+ Process 13 - Customer[6] of group[1] is waiting for the group to form.
+
+ Process 14 - Customer[7] in Group[1] is going to the bathroom.
+
+ Process 14 - Customer[7] in Group[1] is leaving the bathroom.
+
+ Process 14 - Customer[7] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] is waiting for the group to form.
+
+ Process 25 - Customer[26] in Group[6] is going to the bathroom.
+
+ Process 25 - Customer[26] in Group[6] is leaving the bathroom.
+
+ Process 24 - Customer[8] of group[1] is waiting for the group to form.
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 13 - Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 25 - Customer[26] of group[6] is waiting for the group to form.
+
+ Process 14 - Customer[7] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 24 - Customer[8] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 21 - Customer[16] of group[4] is waiting for the group to form.
+
+ Process 27 - Customer[27] of group[6] is waiting for the group to form.
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 28 - Customer[25] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 12 - Customer[18] of group[4] is waiting for the group to form.
+
+ Process 25 - Customer[26] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 27 - Customer[27] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 22 - Customer[9] of group[2] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] is waiting for the group to form.
+
+ Process 23 - Customer[11] of group[2] is waiting for the group to form.
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 17 - Customer[12] in Group[2] is going to the bathroom.
+
+ Process 21 - Customer[16] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 9 - Customer[22] in Group[5] is going to the bathroom.
+
+ Process 12 - Customer[18] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 17 - Customer[12] in Group[2] is leaving the bathroom.
+
+ Process 8 - Customer[20] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 9 - Customer[22] in Group[5] is leaving the bathroom.
+
+ Process 9 - Customer[22] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is waiting for the group to form.
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 22 - Customer[9] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 23 - Customer[11] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] is waiting for the group to form.
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 9 - Customer[22] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 6 - Customer[10] in Group[3] is leaving the lobby.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketTaker Line[0]
+
+ Process 6 - Customer[10] in Group[3] is leaving TicketTaker[0]
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 6 - Customer[10] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 6 - Customer[10] of group[3] is sitting in a theater room seat.
+
+ Process 10 - Customer[13] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 10 - Customer[13] of group[3] is sitting in a theater room seat.
+
+ Process 11 - Customer[14] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 11 - Customer[14] of group[3] is sitting in a theater room seat.
+
+ Process 19 - Customer[15] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 19 - Customer[15] of group[3] is sitting in a theater room seat.
+
+ Process 10 - Customer[13] of group[3] is getting out of a theater room seat.
+
+ Process 6 - HeadCustomer[10] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] of group[3] is getting out of a theater room seat.
+
+ Process 19 - Customer[15] of group[3] is getting out of a theater room seat.
+
+ Process 10 - Customer[13] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] of group[3] is waiting for the group to form.
+
+ Process 19 - Customer[15] of group[3] is waiting for the group to form.
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 10 - Customer[13] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 11 - Customer[14] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 19 - Customer[15] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 6 - HeadCustomer[10] of group[3] is waiting for the group to form.
+
+ Process 10 - Customer[13] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] in Group[3] is going to the bathroom.
+
+ Process 11 - Customer[14] in Group[3] is leaving the bathroom.
+
+ Process 11 - Customer[14] of group[3] is waiting for the group to form.
+
+ Process 19 - Customer[15] in Group[3] is going to the bathroom.
+
+ Process 19 - Customer[15] in Group[3] is leaving the bathroom.
+
+ Process 19 - Customer[15] of group[3] is waiting for the group to form.
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 10 - Customer[13] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 11 - Customer[14] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 19 - Customer[15] of group[3] has been told by the HeadCustomer to proceed.
+Machine halting!
+
+_________________________________________________________________________
+
+
+nachos -x ../test/simulatorExecCC -sc 1 -m 3:
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 4 -  ConcessionClerk[1] has a line length=1 and is signaling a customer.
+
+ Process 3 -  ConcessionClerk[2] is going on break.
+
+ Process 1 -  ConcessionClerk[3] is going on break.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has an order for 4 popcorn and 2 soda. The cost is $24.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 4 -  ConcessionClerk[1] has an order for 3 popcorn and 2 soda. The cost is $20.
+
+ Process 4 -  ConcessionClerk[1] has been paid for the order.
+
+ Process 5 -  ConcessionClerk[4] has an order for 4 popcorn and 1 soda. The cost is $20.
+
+ Process 5 -  ConcessionClerk[4] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 4 -  ConcessionClerk[1] has no one in line. I am available for a customer.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 4 -  ConcessionClerk[1] has an order for 3 popcorn and 4 soda. The cost is $28.
+
+ Process 4 -  ConcessionClerk[1] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has an order for 1 popcorn and 3 soda. The cost is $16.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 5 -  ConcessionClerk[4] has an order for 1 popcorn and 2 soda. The cost is $12.
+
+ Process 5 -  ConcessionClerk[4] has been paid for the order.
+
+ Process 4 -  ConcessionClerk[1] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has an order for 2 popcorn and 2 soda. The cost is $16.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has no one in line. I am available for a customer.
+Machine halting!
+
+
+_________________________________________________________________________
+
+
+nachos -x ../test/simulatorExecTT -sc 1 -m 4:
+
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is not allowing the group into the theater. The number of taken tickets is 24 and the group size is 4 including HeadCustomer.
+
+ Process 1 - TicketTaker[0] has stopped taking tickets
+
+ Process 1 - TicketTaker[0] has a line length [0] and is signaling a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+Machine halting!
+
+
+_________________________________________________________________________
+
+
+nachos -x ../test/simulatorExecManagerTech -sc 1 -m 5:
+
+
+ Process 1 - Manager has told TicketClerk[4] to go on break.
+
+ Process 1 - Manager has told ConcessionClerk[3] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told TicketClerk[1] to go on break.
+
+ Process 1 - Manager has told TicketClerk[3] to go on break.
+
+ Process 1 - Manager has told ConcessionClerk[2] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told ConcessionClerk[2] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told TicketClerk[1] to go on break.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager is telling the MovieTechnnician to start the movie.
+
+ Process 2 - The MovieTechnician has started the movie.
+
+ Process 2 - The MovieTechnician has ended the movie.
+
+ Process 2 - The MovieTechnician has told all customers to leave the theater room.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager has told ConcessionClerk[0] to go on break
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager is telling the MovieTechnnician to start the movie.
+
+ Process 2 - The MovieTechnician has started the movie.
+
+ Process 2 - The MovieTechnician has ended the movie.
+
+ Process 2 - The MovieTechnician has told all customers to leave the theater room.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+Machine halting!
+
+
+_________________________________________________________________________
+
+
+
+
+
+
+
+
+-------------------------------
+Test cases for part II - Running the test cases with distributed servers.
+-------------------------------
+
+
+................................................................................................................................................
++ How to test
+................................................................................................................................................
+
+Files:
+
+01. tcase1
+02. tcase2
+03. tcase3_1
+04. tcase3_2
+05. tcase4_1
+06. tcase4_2
+07. tcase5_1
+08. tcase5_2
+09. tcase6
+10. tcase7_1
+11. tcase7_2
+12. tcase7_3
+13. tcase8_1
+14. tcase8_2
+15.	ticketClerk
+16.	customerHead
+17.	simulatorExecTC
+18.	simulatorExecCustHead
+19.	concessionClerk
+20.	simulatorExecCC
+21.	customer
+22.	ticketTaker
+23.	simulatorExecTT
+24.	Manager
+25.	simulatorExecManagerTech
+26.	Technician
+27 .	MultiCreates
+28.	MultiCreatesFile
+29.	action.cc
+30.	action.h
+31.	nettest1.cc
+32.	nettest2.cc
+
+
+
+Run all 5 servers before executing user programs.
+
+___________________________________________
+
+Test Case 1
+
+Open 6 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase1 -sc 5 -m 5
+
+___________________________________________
+
+Test Case 2
+
+Open 6 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase2 -sc 5 -m 5
+
+___________________________________________
+
+Test Case 3
+
+Open 7 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase3_1 -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/tcase3_2 -sc 5 -m 6
+
+
+___________________________________________
+
+Test Case 4
+
+Open 7 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase4_1 -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/tcase4_2 -sc 5 -m 6
+
+___________________________________________
+
+Test Case 5
+
+Open 7 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase5_1 -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/tcase5_2 -sc 5 -m 6
+
+___________________________________________
+
+Test Case 6
+
+Open 6 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase6 -sc 5 -m 5
+
+___________________________________________
+
+Test Case 7
+
+Open 8 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase7_1 -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/tcase7_2 -sc 5 -m 6
+
+On the eigth nachos instance:
+nachos -x ../test/tcase7_3 -sc 5 -m 7
+___________________________________________
+
+Test Case 8
+
+Open 7 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/tcase8_1 -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/tcase8_2 -sc 5 -m 6
+
+___________________________________________
+
+Test Case 9 - Special Case
+
+2 Locks- "lock1", "lock2", 2 CVs- "cv1", "cv2", 2 MVs- "mv1", "mv2" are been created by process "MultiCreatesFile.c" which is getting EXEC 4 times by "MultiCreates.c". 
+
+The servers will get the create requests of same type of the same name simultaneously, but all the servers will communicate and finally create 1 copy of each entity.
+
+Open 6 nachos instances.
+
+On the first nachos instance:
+nachos -m 0 -server -sc 5
+
+On the second nachos instance:
+nachos -m 1 -server -sc 5
+
+On the third nachos instance:
+nachos -m 2 -server -sc 5
+
+On the fourth nachos instance:
+nachos -m 3 -server -sc 5
+
+On the fifth nachos instance:
+nachos -m 4 -server -sc 5
+
+On the sixth nachos instance:
+nachos -x ../test/MultiCreates -m 5 -sc 5
+
+
+___________________________________________
+
+Test Case 10 - Movie Theater
+
+Open 10 nachos instances.
+
+On the first nachos instance:
+nachos -server -sc 5 -m 0
+
+On the second nachos instance:
+nachos -server -sc 5 -m 1
+
+On the third nachos instance:
+nachos -server -sc 5 -m 2
+
+On the fourth nachos instance:
+nachos -server -sc 5 -m 3
+
+On the fifth nachos instance:
+nachos -server -sc 5 -m 4
+
+On the sixth nachos instance:
+nachos -x ../test/simulatorExecTC -sc 5 -m 5
+
+On the seventh nachos instance:
+nachos -x ../test/simulatorExecCustHead -sc 5 -m 6
+
+On the eigth nachos instance:
+nachos -x ../test/simulatorExecCC -sc 5 -m 7
+
+On the ninth nachos instance:
+nachos -x ../test/simulatorExecTT -sc 5 -m 8
+
+On the tenth nachos instance:
+nachos -x ../test/simulatorExecManagerTech -sc 5 -m 9
+
+
+
+................................................................................................................................................
++ Test Output
+................................................................................................................................................
+
+//////////
+Test Case 1
+//////////
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 1 -server -sc 5:
+
+CreateMV- New MV is created by the name 'mv1' at location Index 0 for machine: 5 box: 0
+
+SetMV- Value being set in 'mv1' at its array index: 0 is: 1 for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 2 -server -sc 5:
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 5 box: 0
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 2
+//////////
+
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+ERROR:: Acquire- For Lock 'lock1'. You are already the owner.. for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+_____________________________________________________________________________________
+
+nachos -m 1 -server -sc 5:
+
+ERROR: No such LOCK Exists:: lock2
+
+_____________________________________________________________________________________
+
+nachos -m 2 -server -sc 5:
+
+ERROR: No such LOCK Exists:: lock2
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase2 -m 5 -sc 5:
+
+ Process 0 -  tcase2: Checking Wrong Working of Acquiring, Releasing & Destroying a Lock.
+
+ Process 0 -  tcase2: Checking Wrong Working of Destroying a CV.
+
+ Process 0 -  tcase2: Lock 1 Has Been Created.
+
+ Process 0 -  tcase2: Lock 1 Has Been Acquired.
+
+ERROR: Acquire_Syscall- ACQUIRE FAILURE. MailBox with ID 0
+
+ Process 0 -  tcase2: Lock 1 Not Been Acquired As It Is Already Acquired.
+
+ERROR: Acquire_Syscall- ACQUIRE FAILURE. MailBox with ID 0
+
+ Process 0 -  tcase2: lock2 Not Been Acquired As Lock Is Not Created.
+
+ERROR: Release Syscall- Failure for MailBox 0
+
+ Process 0 -  tcase2: lock2 Not Been Released As Lock Is Not Created.
+
+
+//////////
+Test Case 3
+//////////
+
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5:
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 1916392 box: 1916392
+
+CreateMV- New MV is created by the name 'cnt' at location Index 0 for machine: 1916264 box: 1916264
+
+SetMV- Value being set in 'cnt' at its array index: 0 is: 5 for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase3_1 -m 5 -sc 5:
+
+ Process 0 -  tcase3_1: lock1 Has Been Acquired (By Waiter).
+
+ Process 0 -  tcase3_1: Value for mv1 Returned By Get: '0'.
+
+ Process 0 -  tcase3_1: MV Value for cnt Has Been Set To 5.
+
+ Process 0 -  tcase3_1: Calling Wait (By waiter) on cv1 For lock1. Now run the 'tcase3_2' file.
+
+ Process 0 -  tcase3_1: Waiter Came out of Wait
+
+ Process 0 -  tcase3_1: lock1 Has Been Released (By waiter).
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase3_2 -m 6 -sc 5:
+
+ Process 0 -  tcase3_3: In Signaller.
+
+ Process 0 -  tcase3_2: Value for mv1 Returned By Get: '5'.
+
+ Process 0 -  tcase3_2: Calling Signal (By signaller) For cv1 For lock1.
+
+
+
+
+
+//////////
+Test Case 4
+//////////
+
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 7 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 7 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 8 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 8 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 7 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 7 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase4_1 -m 5 -sc 5:
+
+ Process 0 -  tcase4_1: Going on wait on 'cv1' using 'lock1'. Run the same 'tcase4_1' file multiple times (in different nachos instances).  Process 0 - Then run 
+
+the 'tcase4_2' file.
+
+ Process 0 -  tcase4_1: Have been Signalled on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase4_1 -m 6 -sc 5:
+
+ Process 0 -  tcase4_1: Going on wait on 'cv1' using 'lock1'. Run the same 'tcase4_1' file multiple times (in different nachos instances).  Process 0 - Then run 
+
+the 'tcase4_2' file.
+
+ Process 0 -  tcase4_1: Have been Signalled on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase4_1 -m 7 -sc 5:
+
+ Process 0 -  tcase4_1: Going on wait on 'cv1' using 'lock1'. Run the same 'tcase4_1' file multiple times (in different nachos instances).  Process 0 - Then run 
+
+the 'tcase4_2' file.
+
+ Process 0 -  tcase4_1: Have been Signalled on 'cv1' using 'lock1'.
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase4_2 -m 8 -sc 5:
+
+
+ Process 0 -  tcase4_2: Broadcasting on 'cv1' using 'lock1'.
+
+ Process 0 -  tcase4_2: Broadcasted  on 'cv1' using 'lock1'.
+
+
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 5
+//////////
+
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock2' at index 0 for machine: 5 box: 0
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 1916200 box: 1916200
+
+Acquire- Lock: 'lock2' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock2' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock2' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock2' has been released for machine: 6 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase5_1 -m 5 -sc 5:
+
+ Process 0 -  tcase5_1: Checking Correct Working of Creating & Deleting of Locks and CV.
+
+ Process 0 -  tcase5_1: Going on wait on 'cv1'. Now run the 'tc2_2' file.
+
+ Process 0 -  tcase5_1: Have been Signalled on 'cv1' using 'lock1'.
+
+ Process 0 -  tcase5_1: Releasing 'lock2'. Now tc2_2 can acquire it.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase5_2 -m 6 -sc 5:
+
+ Process 0 -  tcase5_1: Going to signal on 'cv1'.
+
+ Process 0 -  tcase5_2: Now trying to acquire 'lock2'. It will acquired after tcase5_1 releases it.
+
+ Process 0 -  tcase5_2: Lock 'lock2' has been Acquired.
+
+
+_____________________________________________________________________________________
+
+
+
+//////////
+Test Case 6
+//////////
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 3 -server -sc 5:
+
+ERROR: No such CV Exists:: cv2
+
+_____________________________________________________________________________________
+
+nachos -m 1 -server -sc 5
+
+ERROR: No such CV Exists:: cv2
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5:
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 5 box: 0
+
+ERROR: in Release of Wait- Lock Ownership Issues Exists for Lock :: lock1
+
+ERROR: in Acquire of Signal- Lock Ownership is not with Signal-er, Issues Exists for Lock :: lock1
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase6 -m 5 -sc 5
+
+ Process 0 -  tcase6: Checking Working of Wait and Signal.
+
+ Process 0 -  tcase6: Going on wait on 'cv1' using 'lock1' that is not acquired. Will not go on wait.
+
+ERROR: Wait_Syscall- WAIT FAILURE..
+
+ Process 0 - ERROR - tcase6: Could not go on wait on 'cv1' using 'lock1'.
+
+ Process 0 -  tcase6: Signalling on 'cv1' using 'lock1' that is not acquired. Will not Signal.
+
+ERROR: Signal_Syscall- SIGNAL FAILURE..
+
+ Process 0 - ERROR - tcase6: Could not Signal on 'cv1' using 'lock1'.
+
+ Process 0 -  tcase6: Going on wait on 'cv2' that is not created using 'lock1'. Will not go on wait.
+
+ERROR: Wait_Syscall- WAIT FAILURE..
+
+ Process 0 -  ERROR - tcase6: Could not go on wait on 'cv1' using 'lock2'.
+
+ Process 0 -  tcase6: Signalling on 'cv2' that is not created using 'lock1'. Will not Signal.
+
+ Process 0 - ERROR - tcase6: Could not Signal on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+
+
+//////////
+Test Case 7
+//////////
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5:
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+CreateLock- New Lock is created by the name 'lock2' at index 1 for machine: 6 box: 0
+
+Acquire- Lock: 'lock2' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock2' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock2' has been acquired for machine: 7 box: 0
+
+Release- Lock: 'lock2' has been released for machine: 7 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 7 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 7 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5:
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 5 box: 0
+
+ERROR: Wait- The lock passed is not same as the waiting lock
+
+ERROR: Broadcast waitingLock is not the same lock as of CV
+
+ERROR: SIGNAL- The lock passed is not same as the waiting lock
+
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase7_1 -m 5 -sc 5
+
+ Process 0 -  tcase7_1: Checking Working of Wait and Signal - THIS FILE GOES ON WAIT SUCCESSFULLY.
+
+ Process 0 -  tcase7_1: Going on wait on 'cv1' using 'lock1' that is the correct lock (First Waiter).
+
+ Process 0 -  Will go on wait. Now run the 'tc7_2' file.
+
+ Process 0 -  tcase7_1: Have been Signalled on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase7_2 -m 6 -sc 5
+
+ Process 0 -  tcase7_2: THIS FILE DOES NOT GO ON WAIT AS THE LOCK IS DIFFERENT.
+
+ Process 0 -  tcase7_2: Going on wait on 'cv1' using 'lock2' that is not the correct lock for that CV (Not the First Waiter).
+
+ Process 0 -  Will Not go on wait.
+
+ERROR: Wait_Syscall- WAIT FAILURE..
+
+ Process 0 -  ERROR - tcase7_2: Could not be Signalled AS DID NOT GO ON WAIT on 'cv1' using 'lock2'.
+
+ Process 0 -  tcase7_2: Reached end. Now run the 'tc7_3' file.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase7_3 -m 7 -sc 5
+
+ Process 0 -  tcase7_3: THIS FILE BROADCASTS ON THAT CV, FIRST WITH THE INCORRECT LOCK, THEN SIGNALS ON THAT CV, WITH THE INCORRECT LOCK AND THEN AGAIN WITH THE 
+
+CORRECT LOCK.
+
+ Process 0 -  tcase7_3: Broadcasting on 'cv1' using 'lock2' that is the INCORRECT lock. Will not Broadcast.
+
+ERROR: Broadcast_Syscall- BROADCAST FAILURE..
+
+ Process 0 -  ERROR - tcase7_3: Could not Broadcast on 'cv1' using 'lock2'.
+
+ Process 0 -  tcase7_3: Signalling on 'cv1' using 'lock2' that is the INCORRECT lock. Will not Signal.
+
+ERROR: Signal_Syscall- SIGNAL FAILURE..
+
+ Process 0 -  ERROR - tcase7_3: Could not Signal on 'cv1' using 'lock2'.
+
+ Process 0 -  tcase7_3: Signalling on 'cv1' using 'lock1' that is the CORRECT lock.
+
+ Process 0 -  tcase7_3: Signalled  on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 8
+//////////
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 6 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 6 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 5 box: 0
+
+Release- Lock: 'lock1' has been released for machine: 5 box: 0
+
+_____________________________________________________________________________________
+
+nachos -m 2 -server -sc 5
+
+CreateMV- New MV is created by the name 'mv1' at location Index 0 for machine: 5 box: 0
+
+SetMV- Value being set in 'mv1' at its array index: 0 is: 5 for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 5 box: 0
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase8_1 -m 5 -sc 5
+
+ Process 0 -  tcase8_1: Multiple creation and deletion of same Montior Variables of same arraysize by diff userprog's.
+
+ Process 0 -  tcase8_1: 'mv1' of Array Size 1 Created.
+
+ Process 0 -  tcase8_1: Setting value '5' for MV name 'mv1' at Array Index '0'.
+
+ Process 0 -  tcase8_1: GetMV gets: '5' for 'mv1', Array Index '0'.
+
+ Process 0 -  tcase8_1: Going on wait on 'cv1' using 'lock1' that is acquired. Now run the 'tc8_2' file.
+
+ Process 0 -  tcase8_1: Have been signalled on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/tcase8_2 -m 6 -sc 5
+
+ Process 0 -  tcase8_2: Multiple creation of same Montior Variables of same arraysize by diff userprog's.
+
+ Process 0 -  tcase8_2: Requesting to create 'mv1' of Array Size 1.
+
+ Process 0 -  tcase8_2: GetMV gets: '5' for 'mv1', Array Index '0'.
+
+ Process 0 -  tcase8_2: Requesting to create 'mv1' of Array Size 2.
+
+ Process 0 -  ERROR - tcase8_2: Cannot create 'mv1' of Array Size 2.
+
+ Process 0 -  tcase8_2: Going on Signal on 'cv1' using 'lock1'.
+
+ Process 0 -  tcase8_2: Signalled on 'cv1' using 'lock1'.
+
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 9
+//////////
+
+_____________________________________________________________________________________
+
+nachos -m 0 -server -sc 5
+
+Going to compare timestamp values for the CREATE LOCK. Values: My 'Server:0' TS: 1526359074.  Received Request 'Server:1' TS: 1526361117
+
+My timestamp is earlier, then I 'Serverid: 0' should queue the request..
+
+Going to compare timestamp values for the CREATE LOCK. Values: My 'Server:0' TS: 1526359074.  Received Request 'Server:4' TS: 1529708944
+
+My timestamp is earlier, then I 'Serverid: 0' should queue the request..
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 5 box: 1
+
+Going to compare timestamp values for the CREATE MV. Values: My 'Server:0' TS: 1529720459.  Received Request 'Server:4' TS: 1529720985
+
+My timestamp is earlier, then I 'Serverid: 0' should queue the request..
+
+
+_____________________________________________________________________________________
+
+nachos -m 1 -server -sc 5
+
+Going to compare timestamp values for the CREATE LOCK. Values: My 'Server:1' TS: 1526361117.  Received Request 'Server:4' TS: 1529708944
+
+My timestamp is earlier, then I 'Serverid: 1' should queue the request..
+
+CreateLock- New Lock is created by the name 'lock2' at index 0 for machine: 5 box: 1
+
+CreateCV- New CV is created by the name 'cv1' at location index 0 for machine: 5 box: 1
+
+CreateMV- New MV is created by the name 'mv1' at location Index 0 for machine: 5 box: 1
+
+CreateMV- New MV is created by the name 'mv2' at location Index 1 for machine: 5 box: 1
+
+
+_____________________________________________________________________________________
+
+nachos -m 2 -server -sc 5
+
+Going to compare timestamp values for the CREATE CV. Values: My 'Server:2' TS: 1529715806.  Received Request 'Server:4' TS: 1529715443
+
+My timestamp is LATER, I 'Serverid: 2' should reply no..
+
+
+
+_____________________________________________________________________________________
+
+nachos -m 3 -server -sc 5
+
+CreateCV- New CV is created by the name 'cv2' at location index 0 for machine: 5 box: 1
+
+
+_____________________________________________________________________________________
+
+nachos -m 4 -server -sc 5
+
+Going to compare timestamp values for the CREATE LOCK. Values: My 'Server:4' TS: 1529708944.  Received Request 'Server:0' TS: 1526359074
+
+My timestamp is LATER, I 'Serverid: 4' should reply no..
+
+Going to compare timestamp values for the CREATE LOCK. Values: My 'Server:4' TS: 1529708944.  Received Request 'Server:1' TS: 1526361117
+
+My timestamp is LATER, I 'Serverid: 4' should reply no..
+
+Going to compare timestamp values for the CREATE CV. Values: My 'Server:4' TS: 1529715443.  Received Request 'Server:2' TS: 1529715806
+
+My timestamp is earlier, then I 'Serverid: 4' should queue the request..
+
+Going to compare timestamp values for the CREATE MV. Values: My 'Server:4' TS: 1529720985.  Received Request 'Server:0' TS: 1529720459
+
+My timestamp is LATER, I 'Serverid: 4' should reply no..
+
+
+_____________________________________________________________________________________
+
+nachos -x ../test/MultiCreates -m 5 -sc 5
+
+ Process 0 - 1-4 Processes are being EXEC of the same file so that the 'CREATE' requests of the LOCKs, CVs & MVs each of same name is encountered and created only 
+
+ONCE at any server.
+
+ Process 1 - Lock by name 'lock1' Created.
+
+ Process 3 - Lock by name 'lock1' Created.
+
+ Process 2 - Lock by name 'lock1' Created.
+
+ Process 4 - Lock by name 'lock1' Created.
+
+ Process 1 - Lock by name 'lock2' Created.
+
+ Process 2 - Lock by name 'lock2' Created.
+
+ Process 3 - Lock by name 'lock2' Created.
+
+ Process 4 - Lock by name 'lock2' Created.
+
+ Process 1 - CV by name 'cv1' Created.
+
+ Process 2 - CV by name 'cv1' Created.
+
+ Process 3 - CV by name 'cv1' Created.
+
+ Process 4 - CV by name 'cv1' Created.
+
+ Process 1 - CV by name 'cv2' Created.
+
+ Process 2 - CV by name 'cv2' Created.
+
+ Process 3 - CV by name 'cv2' Created.
+
+ Process 4 - CV by name 'cv2' Created.
+
+ Process 1 - MV by name 'mv1' Created.
+
+ Process 2 - MV by name 'mv1' Created.
+
+ Process 3 - MV by name 'mv1' Created.
+
+ Process 4 - MV by name 'mv1' Created.
+
+ Process 1 - MV by name 'mv1' Created.
+
+ Process 2 - MV by name 'mv1' Created.
+
+ Process 3 - MV by name 'mv1' Created.
+
+ Process 4 - MV by name 'mv1' Created.
+
+_____________________________________________________________________________________
+
+
+//////////
+Test Case 10 - Movie Theater
+//////////
+
+nachos -x ../test/simulatorExecTC -sc 5 -m 5
+
+ Process 5 - TicketClerk[0] has no one in line. I am available for a customer.
+
+ Process 3 - TicketClerk[1] has no one in line. I am available for a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 4 - TicketClerk[3] has no one in line. I am available for a customer.
+
+ Process 1 - TicketClerk[4] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has a line length=1 and is signaling a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 2 - TicketClerk[2] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 2 - TicketClerk[2] has no one in line. I am available for a customer.
+
+ Process 5 - TicketClerk[0] has an order for 4 tickets and the cost is $48.
+
+ Process 5 - TicketClerk[0] has no one in line. I am available for a customer.
+Machine halting!
+
+_________________________________________________________________________
+
+nachos -x ../test/simulatorExecCustHead -sc 5 -m 6
+
+ Process 20 - Customer [0] in Group [0] has entered the movie theater.
+
+ Process 20 - Customer[0] of group[0] is waiting for the HeadCustomer.
+
+ Process 18 - Customer [1] in Group [0] has entered the movie theater.
+
+ Process 18 - Customer[1] of group[0] is waiting for the HeadCustomer.
+
+ Process 26 - Customer [2] in Group [0] has entered the movie theater.
+
+ Process 26 - Customer[2] of group[0] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in Group[0] is getting in TicketClerk line[0]
+
+ Process 5 - Customer[3] in Group[0] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 4 - Customer[4] in Group[1] is getting in TicketClerk line[2]
+
+ Process 13 - Customer [6] in Group [1] has entered the movie theater.
+
+ Process 13 - Customer[6] of group[1] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 14 - Customer [7] in Group [1] has entered the movie theater.
+
+ Process 14 - Customer[7] of group[1] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 24 - Customer [8] in Group [1] has entered the movie theater.
+
+ Process 24 - Customer[8] of group[1] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in Group[0] is leaving TicketClerk[0]
+
+ Process 22 - Customer [9] in Group [2] has entered the movie theater.
+
+ Process 22 - Customer[9] of group[2] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is getting in TicketClerk line[0]
+
+ Process 4 - Customer[4] in Group[1] is leaving TicketClerk[2]
+
+ Process 20 - Customer[0] in group[0] wants 1 popcorn and 1 soda.
+
+ Process 20 - Customer[0] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+ Process 23 - Customer [11] in Group [2] has entered the movie theater.
+
+ Process 23 - Customer[11] of group[2] is waiting for the HeadCustomer.
+
+ Process 18 - Customer[1] in group[0] wants 1 popcorn and 0 soda.
+
+ Process 18 - Customer[1] in Group[0] has 1 popcorn and 0 soda request from a group member
+
+ Process 13 - Customer[6] in group[1] wants 1 popcorn and 0 soda.
+
+ Process 13 - Customer[6] in Group[1] has 1 popcorn and 0 soda request from a group member
+
+ Process 17 - Customer [12] in Group [2] has entered the movie theater.
+
+ Process 26 - Customer[2] in group[0] wants 1 popcorn and 1 soda.
+
+ Process 26 - Customer[2] in Group[0] has 1 popcorn and 1 soda request from a group member
+
+ Process 17 - Customer[12] of group[2] is waiting for the HeadCustomer.
+
+ Process 14 - Customer[7] in group[1] wants 1 popcorn and 1 soda.
+
+ Process 14 - Customer[7] in Group[1] has 1 popcorn and 1 soda request from a group member
+
+ Process 20 - Customer[0] of group[0] is waiting for the HeadCustomer.
+
+ Process 10 - Customer [13] in Group [3] has entered the movie theater.
+
+ Process 24 - Customer[8] in group[1] wants 0 popcorn and 0 soda.
+
+ Process 24 - Customer[8] in Group[1] has 0 popcorn and 0 soda request from a group member
+
+ Process 18 - Customer[1] of group[0] is waiting for the HeadCustomer.
+
+ Process 10 - Customer[13] of group[3] is waiting for the HeadCustomer.
+
+ Process 5 - Customer[3] in group[0] wants 1 popcorn and 0 soda.
+
+ Process 13 - Customer[6] of group[1] is waiting for the HeadCustomer.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketClerk line[0]
+
+ Process 11 - Customer [14] in Group [3] has entered the movie theater.
+
+ Process 26 - Customer[2] of group[0] is waiting for the HeadCustomer.
+
+ Process 14 - Customer[7] of group[1] is waiting for the HeadCustomer.
+
+ Process 11 - Customer[14] of group[3] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in group[1] wants 1 popcorn and 1 soda.
+
+ Process 19 - Customer [15] in Group [3] has entered the movie theater.
+
+ Process 24 - Customer[8] of group[1] is waiting for the HeadCustomer.
+
+ Process 19 - Customer[15] of group[3] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] is getting in ConcessionClerk Line[0]
+
+ Process 1 - Customer[5] in Group[2] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 21 - Customer [16] in Group [4] has entered the movie theater.
+
+ Process 21 - Customer[16] of group[4] is waiting for the HeadCustomer.
+
+ Process 12 - Customer [18] in Group [4] has entered the movie theater.
+
+ Process 12 - Customer[18] of group[4] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is leaving TicketClerk[0]
+
+ Process 2 - Customer[17] in Group[4] is getting in TicketClerk line[2]
+
+ Process 8 - Customer [20] in Group [4] has entered the movie theater.
+
+ Process 2 - Customer[17] in Group[4] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 8 - Customer[20] of group[4] is waiting for the HeadCustomer.
+
+ Process 22 - Customer[9] in group[2] wants 1 popcorn and 0 soda.
+
+ Process 22 - Customer[9] in Group[2] has 1 popcorn and 0 soda request from a group member
+
+ Process 4 - Customer[4] in Group[1] is getting in ConcessionClerk Line[1]
+
+ Process 9 - Customer [22] in Group [5] has entered the movie theater.
+
+ Process 23 - Customer[11] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 23 - Customer[11] in Group[2] has 0 popcorn and 1 soda request from a group member
+
+ Process 9 - Customer[22] of group[5] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 17 - Customer[12] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 17 - Customer[12] in Group[2] has 0 popcorn and 1 soda request from a group member
+
+ Process 16 - Customer [23] in Group [5] has entered the movie theater.
+
+ Process 22 - Customer[9] of group[2] is waiting for the HeadCustomer.
+
+ Process 16 - Customer[23] of group[5] is waiting for the HeadCustomer.
+
+ Process 23 - Customer[11] of group[2] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] is leaving TicketClerk[2]
+
+ Process 1 - Customer[5] in group[2] wants 0 popcorn and 1 soda.
+
+ Process 17 - Customer[12] of group[2] is waiting for the HeadCustomer.
+
+ Process 15 - Customer [24] in Group [5] has entered the movie theater.
+
+ Process 7 - Customer[19] in Group[5] is getting in TicketClerk line[0]
+
+ Process 15 - Customer[24] of group[5] is waiting for the HeadCustomer.
+
+ Process 21 - Customer[16] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 21 - Customer[16] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 12 - Customer[18] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 12 - Customer[18] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 28 - Customer [25] in Group [6] has entered the movie theater.
+
+ Process 28 - Customer[25] of group[6] is waiting for the HeadCustomer.
+
+ Process 8 - Customer[20] in group[4] wants 1 popcorn and 0 soda.
+
+ Process 8 - Customer[20] in Group[4] has 1 popcorn and 0 soda request from a group member
+
+ Process 1 - Customer[5] in Group[2] is getting in ConcessionClerk Line[2]
+
+ Process 25 - Customer [26] in Group [6] has entered the movie theater.
+
+ Process 21 - Customer[16] of group[4] is waiting for the HeadCustomer.
+
+ Process 25 - Customer[26] of group[6] is waiting for the HeadCustomer.
+
+ Process 12 - Customer[18] of group[4] is waiting for the HeadCustomer.
+
+ Process 27 - Customer [27] in Group [6] has entered the movie theater.
+
+ Process 3 - Customer[21] in Group[6] is getting in TicketClerk line[2]
+
+ Process 27 - Customer[27] of group[6] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in group[4] wants 1 popcorn and 1 soda.
+
+ Process 8 - Customer[20] of group[4] is waiting for the HeadCustomer.
+
+ Process 6 - Customer[10] in Group[3] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 6 - Customer[10] in Group[3] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 3 - Customer[21] in Group[6] is walking up to TicketClerk[2] to buy 1 tickets
+
+ Process 6 - Customer[10] in Group[3] is leaving TicketClerk[0]
+
+ Process 3 - Customer[21] in Group[6] in TicketClerk line[2] is paying 48 for tickets
+
+ Process 5 - Customer[3] in Group[0] is walking up to ConcessionClerk[0] to buy [4] popcorn and [2] soda.
+
+ Process 2 - Customer[17] in Group[4] is getting in ConcessionClerk Line[4]
+
+ Process 10 - Customer[13] in group[3] wants 0 popcorn and 1 soda.
+
+ Process 10 - Customer[13] in Group[3] has 0 popcorn and 1 soda request from a group member
+
+ Process 4 - Customer[4] in Group[1] is walking up to ConcessionClerk[1] to buy [3] popcorn and [2] soda.
+
+ Process 3 - Customer[21] in Group[6] is leaving TicketClerk[2]
+
+ Process 11 - Customer[14] in group[3] wants 1 popcorn and 0 soda.
+
+ Process 11 - Customer[14] in Group[3] has 1 popcorn and 0 soda request from a group member
+
+ Process 7 - Customer[19] in Group[5] is walking up to TicketClerk[0] to buy 1 tickets
+
+ Process 5 - Customer[3] in Group[0] in ConcessionClerk line[0] is paying[24] for food.
+
+ Process 2 - Customer[17] in Group[4] is walking up to ConcessionClerk[4] to buy [4] popcorn and [1] soda.
+
+ Process 19 - Customer[15] in group[3] wants 0 popcorn and 0 soda.
+
+ Process 19 - Customer[15] in Group[3] has 0 popcorn and 0 soda request from a group member
+
+ Process 10 - Customer[13] of group[3] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] in ConcessionClerk line[1] is paying[20] for food.
+
+ Process 28 - Customer[25] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 28 - Customer[25] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 11 - Customer[14] of group[3] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in Group[5] in TicketClerk line[0] is paying 48 for tickets
+
+ Process 6 - Customer[10] in group[3] wants 1 popcorn and 1 soda.
+
+ Process 5 - Customer[3] in Group [0] is leaving ConcessionClerk[0]
+
+ Process 25 - Customer[26] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 25 - Customer[26] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 2 - Customer[17] in Group[4] in ConcessionClerk line[4] is paying[20] for food.
+
+ Process 19 - Customer[15] of group[3] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in Group[5] is leaving TicketClerk[0]
+
+ Process 4 - Customer[4] in Group [1] is leaving ConcessionClerk[1]
+
+ Process 27 - Customer[27] in group[6] wants 1 popcorn and 1 soda.
+
+ Process 27 - Customer[27] in Group[6] has 1 popcorn and 1 soda request from a group member
+
+ Process 5 - Customer[3] in Group[0] is getting in TicketTaker Line[0]
+
+ Process 28 - Customer[25] of group[6] is waiting for the HeadCustomer.
+
+ Process 1 - Customer[5] in Group[2] is getting in ConcessionClerk Line[0]
+
+ Process 25 - Customer[26] of group[6] is waiting for the HeadCustomer.
+
+ Process 9 - Customer[22] in group[5] wants 0 popcorn and 1 soda.
+
+ Process 9 - Customer[22] in Group[5] has 0 popcorn and 1 soda request from a group member
+
+ Process 2 - Customer[17] in Group [4] is leaving ConcessionClerk[4]
+
+ Process 3 - Customer[21] in group[6] wants 0 popcorn and 1 soda.
+
+ Process 27 - Customer[27] of group[6] is waiting for the HeadCustomer.
+
+ Process 4 - Customer[4] in Group[1] is getting in TicketTaker Line[1]
+
+ Process 16 - Customer[23] in group[5] wants 1 popcorn and 1 soda.
+
+ Process 16 - Customer[23] in Group[5] has 1 popcorn and 1 soda request from a group member
+
+ Process 15 - Customer[24] in group[5] wants 0 popcorn and 0 soda.
+
+ Process 15 - Customer[24] in Group[5] has 0 popcorn and 0 soda request from a group member
+
+ Process 9 - Customer[22] of group[5] is waiting for the HeadCustomer.
+
+ Process 16 - Customer[23] of group[5] is waiting for the HeadCustomer.
+
+ Process 7 - Customer[19] in group[5] wants 0 popcorn and 0 soda.
+
+ Process 15 - Customer[24] of group[5] is waiting for the HeadCustomer.
+
+ Process 2 - Customer[17] in Group[4] is getting in TicketTaker Line[2]
+
+ Process 6 - Customer[10] in Group[3] is getting in ConcessionClerk Line[0]
+
+ Process 5 - Customer[3] in Group[0] is leaving TicketTaker[0]
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 3 - Customer[21] in Group[6] is getting in ConcessionClerk Line[1]
+
+ Process 4 - Customer[4] in Group[1] is leaving TicketTaker[1]
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 5 - Customer[3] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 5 - Customer[3] of group[0] is sitting in a theater room seat.
+
+ Process 2 - Customer[17] in Group[4] is leaving TicketTaker[2]
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 3 - Customer[21] in Group[6] is walking up to ConcessionClerk[1] to buy [3] popcorn and [4] soda.
+
+ Process 20 - Customer[0] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 20 - Customer[0] of group[0] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group[5] is getting in ConcessionClerk Line[4]
+
+ Process 1 - Customer[5] in Group[2] is walking up to ConcessionClerk[0] to buy [1] popcorn and [3] soda.
+
+ Process 18 - Customer[1] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 18 - Customer[1] of group[0] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group[6] in ConcessionClerk line[1] is paying[28] for food.
+
+ Process 7 - Customer[19] in Group[5] is walking up to ConcessionClerk[4] to buy [1] popcorn and [2] soda.
+
+ Process 26 - Customer[2] in Group[0] has found the following seat: row[0] and seat[0]
+
+ Process 26 - Customer[2] of group[0] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] in ConcessionClerk line[0] is paying[16] for food.
+
+ Process 4 - Customer[4] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 4 - Customer[4] of group[1] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group [6] is leaving ConcessionClerk[1]
+
+ Process 7 - Customer[19] in Group[5] in ConcessionClerk line[4] is paying[12] for food.
+
+ Process 2 - Customer[17] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 2 - Customer[17] of group[4] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group [2] is leaving ConcessionClerk[0]
+
+ Process 3 - Customer[21] in Group[6] is getting in TicketTaker Line[0]
+
+ Process 13 - Customer[6] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 13 - Customer[6] of group[1] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group [5] is leaving ConcessionClerk[4]
+
+ Process 14 - Customer[7] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 14 - Customer[7] of group[1] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] is getting in TicketTaker Line[1]
+
+ Process 24 - Customer[8] in Group[1] has found the following seat: row[0] and seat[0]
+
+ Process 24 - Customer[8] of group[1] is sitting in a theater room seat.
+
+ Process 21 - Customer[16] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 21 - Customer[16] of group[4] is sitting in a theater room seat.
+
+ Process 7 - Customer[19] in Group[5] is getting in TicketTaker Line[2]
+
+ Process 12 - Customer[18] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 12 - Customer[18] of group[4] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is walking up to ConcessionClerk[0] to buy [2] popcorn and [2] soda.
+
+ Process 3 - Customer[21] in Group[6] is leaving TicketTaker[0]
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 8 - Customer[20] in Group[4] has found the following seat: row[0] and seat[0]
+
+ Process 8 - Customer[20] of group[4] is sitting in a theater room seat.
+
+ Process 3 - Customer[21] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 3 - Customer[21] of group[6] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] in ConcessionClerk line[0] is paying[16] for food.
+
+ Process 28 - Customer[25] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 28 - Customer[25] of group[6] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] is leaving TicketTaker[1]
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 25 - Customer[26] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 25 - Customer[26] of group[6] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group [3] is leaving ConcessionClerk[0]
+
+ Process 27 - Customer[27] in Group[6] has found the following seat: row[0] and seat[0]
+
+ Process 27 - Customer[27] of group[6] is sitting in a theater room seat.
+
+ Process 1 - Customer[5] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 1 - Customer[5] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketTaker Line[0]
+
+ Process 7 - Customer[19] in Group[5] is leaving TicketTaker[2]
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 22 - Customer[9] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 22 - Customer[9] of group[2] is sitting in a theater room seat.
+
+ Process 23 - Customer[11] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 23 - Customer[11] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is rejected by TicketTaker[0]. Going to the lobby.
+
+ Process 17 - Customer[12] in Group[2] has found the following seat: row[0] and seat[0]
+
+ Process 17 - Customer[12] of group[2] is sitting in a theater room seat.
+
+ Process 6 - Customer[10] in Group[3] is in the lobby.
+
+ Process 7 - Customer[19] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 7 - Customer[19] of group[5] is sitting in a theater room seat.
+
+ Process 9 - Customer[22] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 9 - Customer[22] of group[5] is sitting in a theater room seat.
+
+ Process 16 - Customer[23] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 16 - Customer[23] of group[5] is sitting in a theater room seat.
+
+ Process 15 - Customer[24] in Group[5] has found the following seat: row[0] and seat[0]
+
+ Process 15 - Customer[24] of group[5] is sitting in a theater room seat.
+
+ Process 20 - Customer[0] of group[0] is getting out of a theater room seat.
+
+ Process 5 - HeadCustomer[3] of group[0] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] is getting out of a theater room seat.
+
+ Process 26 - Customer[2] of group[0] is getting out of a theater room seat.
+
+ Process 4 - HeadCustomer[4] of group[1] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] is waiting for the group to form.
+
+ Process 13 - Customer[6] of group[1] is getting out of a theater room seat.
+
+ Process 2 - HeadCustomer[17] of group[4] is waiting for the group to form.
+
+ Process 14 - Customer[7] of group[1] is getting out of a theater room seat.
+
+ Process 20 - Customer[0] of group[0] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] is getting out of a theater room seat.
+
+ Process 21 - Customer[16] of group[4] is getting out of a theater room seat.
+
+ Process 26 - Customer[2] of group[0] is waiting for the group to form.
+
+ Process 12 - Customer[18] of group[4] is getting out of a theater room seat.
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 8 - Customer[20] of group[4] is getting out of a theater room seat.
+
+ Process 13 - Customer[6] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] is getting out of a theater room seat.
+
+ Process 3 - HeadCustomer[21] of group[6] is waiting for the group to form.
+
+ Process 21 - Customer[16] of group[4] is waiting for the group to form.
+
+ Process 25 - Customer[26] of group[6] is getting out of a theater room seat.
+
+ Process 14 - Customer[7] of group[1] is waiting for the group to form.
+
+ Process 27 - Customer[27] of group[6] is getting out of a theater room seat.
+
+ Process 28 - Customer[25] of group[6] is waiting for the group to form.
+
+ Process 12 - Customer[18] of group[4] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] is getting out of a theater room seat.
+
+ Process 1 - HeadCustomer[5] of group[2] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] is waiting for the group to form.
+
+ Process 23 - Customer[11] of group[2] is getting out of a theater room seat.
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 25 - Customer[26] of group[6] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is getting out of a theater room seat.
+
+ Process 9 - Customer[22] of group[5] is getting out of a theater room seat.
+
+ Process 7 - HeadCustomer[19] of group[5] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] is waiting for the group to form.
+
+ Process 16 - Customer[23] of group[5] is getting out of a theater room seat.
+
+ Process 27 - Customer[27] of group[6] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] is waiting for the group to form.
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 15 - Customer[24] of group[5] is getting out of a theater room seat.
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 23 - Customer[11] of group[2] is waiting for the group to form.
+
+ Process 9 - Customer[22] of group[5] is waiting for the group to form.
+
+ Process 16 - Customer[23] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is waiting for the group to form.
+
+ Process 18 - Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 20 - Customer[0] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] is waiting for the group to form.
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 13 - Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 14 - Customer[7] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 5 - HeadCustomer[3] of group[0] is waiting for the group to form.
+
+ Process 24 - Customer[8] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 4 - HeadCustomer[4] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 25 - Customer[26] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 27 - Customer[27] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 21 - Customer[16] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 12 - Customer[18] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 3 - HeadCustomer[21] of group[6] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 2 - HeadCustomer[17] of group[4] is waiting for the group to form.
+
+ Process 22 - Customer[9] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 23 - Customer[11] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 17 - Customer[12] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 18 - Customer[1] of group[0] is waiting for the group to form.
+
+ Process 1 - HeadCustomer[5] of group[2] is waiting for the group to form.
+
+ Process 9 - Customer[22] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 20 - Customer[0] of group[0] is waiting for the group to form.
+
+ Process 15 - Customer[24] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] is waiting for the group to form.
+
+ Process 5 - HeadCustomer[3] of group[0] has told the group to proceed.
+
+ Process 18 - Customer[1] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 20 - Customer[0] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 26 - Customer[2] of group[0] has been told by the HeadCustomer to proceed.
+
+ Process 7 - HeadCustomer[19] of group[5] is waiting for the group to form.
+
+ Process 13 - Customer[6] of group[1] is waiting for the group to form.
+
+ Process 14 - Customer[7] in Group[1] is going to the bathroom.
+
+ Process 14 - Customer[7] in Group[1] is leaving the bathroom.
+
+ Process 14 - Customer[7] of group[1] is waiting for the group to form.
+
+ Process 28 - Customer[25] of group[6] is waiting for the group to form.
+
+ Process 25 - Customer[26] in Group[6] is going to the bathroom.
+
+ Process 25 - Customer[26] in Group[6] is leaving the bathroom.
+
+ Process 24 - Customer[8] of group[1] is waiting for the group to form.
+
+ Process 4 - HeadCustomer[4] of group[1] has told the group to proceed.
+
+ Process 13 - Customer[6] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 25 - Customer[26] of group[6] is waiting for the group to form.
+
+ Process 14 - Customer[7] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 24 - Customer[8] of group[1] has been told by the HeadCustomer to proceed.
+
+ Process 21 - Customer[16] of group[4] is waiting for the group to form.
+
+ Process 27 - Customer[27] of group[6] is waiting for the group to form.
+
+ Process 3 - HeadCustomer[21] of group[6] has told the group to proceed.
+
+ Process 28 - Customer[25] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 12 - Customer[18] of group[4] is waiting for the group to form.
+
+ Process 25 - Customer[26] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 27 - Customer[27] of group[6] has been told by the HeadCustomer to proceed.
+
+ Process 22 - Customer[9] of group[2] is waiting for the group to form.
+
+ Process 8 - Customer[20] of group[4] is waiting for the group to form.
+
+ Process 23 - Customer[11] of group[2] is waiting for the group to form.
+
+ Process 2 - HeadCustomer[17] of group[4] has told the group to proceed.
+
+ Process 17 - Customer[12] in Group[2] is going to the bathroom.
+
+ Process 21 - Customer[16] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 9 - Customer[22] in Group[5] is going to the bathroom.
+
+ Process 12 - Customer[18] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 17 - Customer[12] in Group[2] is leaving the bathroom.
+
+ Process 8 - Customer[20] of group[4] has been told by the HeadCustomer to proceed.
+
+ Process 9 - Customer[22] in Group[5] is leaving the bathroom.
+
+ Process 9 - Customer[22] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] is waiting for the group to form.
+
+ Process 1 - HeadCustomer[5] of group[2] has told the group to proceed.
+
+ Process 22 - Customer[9] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 23 - Customer[11] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] is waiting for the group to form.
+
+ Process 17 - Customer[12] of group[2] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] is waiting for the group to form.
+
+ Process 7 - HeadCustomer[19] of group[5] has told the group to proceed.
+
+ Process 9 - Customer[22] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 16 - Customer[23] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 15 - Customer[24] of group[5] has been told by the HeadCustomer to proceed.
+
+ Process 6 - Customer[10] in Group[3] is leaving the lobby.
+
+ Process 6 - Customer[10] in Group[3] is getting in TicketTaker Line[0]
+
+ Process 6 - Customer[10] in Group[3] is leaving TicketTaker[0]
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 6 - Customer[10] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 6 - Customer[10] of group[3] is sitting in a theater room seat.
+
+ Process 10 - Customer[13] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 10 - Customer[13] of group[3] is sitting in a theater room seat.
+
+ Process 11 - Customer[14] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 11 - Customer[14] of group[3] is sitting in a theater room seat.
+
+ Process 19 - Customer[15] in Group[3] has found the following seat: row[0] and seat[0]
+
+ Process 19 - Customer[15] of group[3] is sitting in a theater room seat.
+
+ Process 10 - Customer[13] of group[3] is getting out of a theater room seat.
+
+ Process 6 - HeadCustomer[10] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] of group[3] is getting out of a theater room seat.
+
+ Process 19 - Customer[15] of group[3] is getting out of a theater room seat.
+
+ Process 10 - Customer[13] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] of group[3] is waiting for the group to form.
+
+ Process 19 - Customer[15] of group[3] is waiting for the group to form.
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 10 - Customer[13] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 11 - Customer[14] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 19 - Customer[15] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 6 - HeadCustomer[10] of group[3] is waiting for the group to form.
+
+ Process 10 - Customer[13] of group[3] is waiting for the group to form.
+
+ Process 11 - Customer[14] in Group[3] is going to the bathroom.
+
+ Process 11 - Customer[14] in Group[3] is leaving the bathroom.
+
+ Process 11 - Customer[14] of group[3] is waiting for the group to form.
+
+ Process 19 - Customer[15] in Group[3] is going to the bathroom.
+
+ Process 19 - Customer[15] in Group[3] is leaving the bathroom.
+
+ Process 19 - Customer[15] of group[3] is waiting for the group to form.
+
+ Process 6 - HeadCustomer[10] of group[3] has told the group to proceed.
+
+ Process 10 - Customer[13] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 11 - Customer[14] of group[3] has been told by the HeadCustomer to proceed.
+
+ Process 19 - Customer[15] of group[3] has been told by the HeadCustomer to proceed.
+Machine halting!
+
+_________________________________________________________________________
+
+
+nachos -x ../test/simulatorExecCC -sc 5 -m 7
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 4 -  ConcessionClerk[1] has a line length=1 and is signaling a customer.
+
+ Process 3 -  ConcessionClerk[2] is going on break.
+
+ Process 1 -  ConcessionClerk[3] is going on break.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has an order for 4 popcorn and 2 soda. The cost is $24.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 4 -  ConcessionClerk[1] has an order for 3 popcorn and 2 soda. The cost is $20.
+
+ Process 4 -  ConcessionClerk[1] has been paid for the order.
+
+ Process 5 -  ConcessionClerk[4] has an order for 4 popcorn and 1 soda. The cost is $20.
+
+ Process 5 -  ConcessionClerk[4] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 4 -  ConcessionClerk[1] has no one in line. I am available for a customer.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 4 -  ConcessionClerk[1] has an order for 3 popcorn and 4 soda. The cost is $28.
+
+ Process 4 -  ConcessionClerk[1] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has an order for 1 popcorn and 3 soda. The cost is $16.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 5 -  ConcessionClerk[4] has an order for 1 popcorn and 2 soda. The cost is $12.
+
+ Process 5 -  ConcessionClerk[4] has been paid for the order.
+
+ Process 4 -  ConcessionClerk[1] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has a line length=1 and is signaling a customer.
+
+ Process 5 -  ConcessionClerk[4] has no one in line. I am available for a customer.
+
+ Process 2 -  ConcessionClerk[0] has an order for 2 popcorn and 2 soda. The cost is $16.
+
+ Process 2 -  ConcessionClerk[0] has been paid for the order.
+
+ Process 2 -  ConcessionClerk[0] has no one in line. I am available for a customer.
+Machine halting!
+
+
+_________________________________________________________________________
+
+
+nachos -x ../test/simulatorExecTT -sc 5 -m 8
+
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is not allowing the group into the theater. The number of taken tickets is 24 and the group size is 4 including HeadCustomer.
+
+ Process 1 - TicketTaker[0] has stopped taking tickets
+
+ Process 1 - TicketTaker[0] has a line length [0] and is signaling a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] is allowing the group into the theater. The number of tickets taken is 4.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 1 - TicketTaker[0] has no one in line. I am available for a customer.
+
+ Process 2 - TicketTaker[1] has no one in line. I am available for a customer.
+
+ Process 3 - TicketTaker[2] has no one in line. I am available for a customer.
+Machine halting!
+
+
+_________________________________________________________________________
+
+nachos -x ../test/simulatorExecManagerTech -sc 5 -m 9
+
+
+ Process 1 - Manager has told TicketClerk[4] to go on break.
+
+ Process 1 - Manager has told ConcessionClerk[3] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told TicketClerk[1] to go on break.
+
+ Process 1 - Manager has told TicketClerk[3] to go on break.
+
+ Process 1 - Manager has told ConcessionClerk[2] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told ConcessionClerk[2] to go on break
+
+ Process 1 -  Total money made by office = $0.
+
+ Process 1 - Manager collected $0 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $0 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[4].
+
+ Process 1 - Manager has told TicketClerk[1] to go on break.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager is telling the MovieTechnnician to start the movie.
+
+ Process 2 - The MovieTechnician has started the movie.
+
+ Process 2 - The MovieTechnician has ended the movie.
+
+ Process 2 - The MovieTechnician has told all customers to leave the theater room.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager has told ConcessionClerk[0] to go on break
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 - Manager is telling the MovieTechnnician to start the movie.
+
+ Process 2 - The MovieTechnician has started the movie.
+
+ Process 2 - The MovieTechnician has ended the movie.
+
+ Process 2 - The MovieTechnician has told all customers to leave the theater room.
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+
+ Process 1 -  Total money made by office = $472.
+
+ Process 1 - Manager collected $192 from TicketClerk[0].
+
+ Process 1 - Manager collected $0 from TicketClerk[1].
+
+ Process 1 - Manager collected $144 from TicketClerk[2].
+
+ Process 1 - Manager collected $0 from TicketClerk[3].
+
+ Process 1 - Manager collected $0 from TicketClerk[4].
+
+ Process 1 - Manager collected $56 from ConcessionClerk[0].
+
+ Process 1 - Manager collected $48 from ConcessionClerk[1].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[2].
+
+ Process 1 - Manager collected $0 from ConcessionClerk[3].
+
+ Process 1 - Manager collected $32 from ConcessionClerk[4].
+Machine halting!
+
+
+
+
+-------------------------------
+Test cases for part III.
+-------------------------------
+
+
+................................................................................................................................................
++ How to test
+................................................................................................................................................
+
+Files:
+
+01. tc0_1.c
+02. tc0_2.c 
+03. tc0_3.c
+04. tc0_4.c
+05. tc0_5.c
+
+___________________________________________
+
+Test Case 1 - Checking working of extra credit (when there are waiting members) in a single server.
+
+Open 6 nachos instances. Go to network directory. They will have the following command:
+
+On first instance:
+nachos -m 0 -server3
+
+On second instance:
+nachos -x ../test/tc0_1 -sc 1 -m 1
+
+On third instance:
+nachos -x ../test/tc0_2 -sc 1 -m 2
+
+On fourth instance:
+nachos -x ../test/tc0_3 -sc 1 -m 3
+
+On fifth instance:
+nachos -x ../test/tc0_4 -sc 1 -m 4
+
+On sixth instance:
+nachos -x ../test/tc0_5 -sc 1 -m 5
+
+Run server. Then run file tc0_1. This file will acquire a lock & will print:
+Press Control+C to Exit else wait 10 Seconds for program to exit.
+Then it will exit without releasing the lock.
+There is time for executing tc0_2, tc0_3, tc0_4 & tc0_5 files while tc0_1 is running.
+tc0_2, tc0_3 & tc0_4 will acquire & exit without releasing the lock.
+Once tc0_1 is running and tc0_2, tc0_3 & tc0_4 are executed during that time, then files tc0_2, tc0_3 & tc0_4 get added to the waiting queue of that lock.
+Once a user program exits, server will check if a lock owner is dead & will assign the lock to the next waiting member.
+tc0_5 will acquire & release the lock.
+
+___________________________________________
+
+Test Case 2 - Checking working of extra credit (when there are NO waiting members) in a single server.
+
+Open 2 nachos instances. Go to network directory. They will have the following command:
+
+On first instance:
+nachos -m 0 -server3
+
+On second instance:
+nachos -x ../test/tc0_1 -sc 1 -m 1
+
+Run server. Then run file tc0_1. This file will acquire a lock & will print:
+Press Control+C to Exit else wait 10 Seconds for program to exit.
+Then it will exit without releasing the lock.
+Server after pinging & checking, will free the lock as there are no waiting members.
+
+
+................................................................................................................................................
++ Test Output
+................................................................................................................................................
+
+//////////
+Test Case 1 - .c
+//////////
+
+___________________________________________
+
+aludra.usc.edu(6): nachos -m 0 -server3
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 1 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 1 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 1 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+CreateLock- The Lock by name 'lock1' already Exists. The index being returned is '0 for machine: 2 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 2 box: 0
+
+CreateLock- The Lock by name 'lock1' already Exists. The index being returned is '0 for machine: 3 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 3 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+CreateLock- The Lock by name 'lock1' already Exists. The index being returned is '0 for machine: 4 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 4 box: 0
+
+CreateLock- The Lock by name 'lock1' already Exists. The index being returned is '0 for machine: 5 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 5 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ The postOffice Send failed. Nachos instance has exited without releasing a lock.
+
+ pingFunction- Lock Name: 'lock1' has been released.
+
+ Acquire- Lock name: 'lock1' has been acquired
+ for machine: 2 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ The postOffice Send failed. Nachos instance has exited without releasing a lock.
+
+ pingFunction- Lock Name: 'lock1' has been released.
+
+ Acquire- Lock name: 'lock1' has been acquired
+ for machine: 3 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ The postOffice Send failed. Nachos instance has exited without releasing a lock.
+
+ pingFunction- Lock Name: 'lock1' has been released.
+
+ Acquire- Lock name: 'lock1' has been acquired
+ for machine: 4 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ The postOffice Send failed. Nachos instance has exited without releasing a lock.
+
+ pingFunction- Lock Name: 'lock1' has been released.
+
+ Acquire- Lock name: 'lock1' has been acquired
+ for machine: 5 box: 0
+
+Release- The Lock by name 'lock1' FOUND. The index is '0 for machine: 5 box: 0
+
+Release- LockName: 'lock1' has been released for machine: 5 box: 0
+
+
+
+
+
+
+
+___________________________________________
+
+aludra.usc.edu(9): nachos -x ../test/tc0_1 -m 1 -sc 1
+
+ Process 0 - TC0_1 :: Testing for p4p3.
+
+ Process 0 - TC0_1 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_1 :: Has acquired lock 'lock1' with index: '0' & is going to exit wihtout releasing, run file tc0_2.
+
+ Process 0 -  Press Control+C to Exit else wait 10 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 9 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 8 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 7 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 6 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 5 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 4 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 3 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 2 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 1 Seconds for program to exit.
+Machine halting!
+
+
+
+___________________________________________
+
+aludra.usc.edu(9): nachos -x ../test/tc0_2 -m 2 -sc 1
+
+ Process 0 - TC0_2 :: Testing for p4p3.
+
+ Process 0 - TC0_2 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_2 :: Has acquired lock 'lock1' with index: '0' & is going to exit without releasing, run file tc0_3.
+
+ Process 0 -  Press Control+C to Exit else wait 10 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 9 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 8 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 7 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 6 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 5 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 4 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 3 Seconds for program to exit.
+^C
+Cleaning up...
+
+
+
+
+___________________________________________
+
+aludra.usc.edu(9): nachos -x ../test/tc0_3 -m 3 -sc 1
+
+ Process 0 - TC0_3 :: Testing for p4p3.
+
+ Process 0 - TC0_3 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_3 :: Has acquired lock 'lock1' with index: '0' & is going to exit wihtout releasing, run file tc0_4.
+
+ Process 0 -  Press Control+C to Exit else wait 10 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 9 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 8 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 7 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 6 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 5 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 4 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 3 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 2 Seconds for program to exit.
+^C
+Cleaning up...
+
+
+
+
+
+___________________________________________
+
+aludra.usc.edu(10): nachos -x ../test/tc0_4 -m 4 -sc 1
+
+ Process 0 - TC0_4 :: Testing for p4p3.
+
+ Process 0 - TC0_4 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_4 :: Has acquired lock 'lock1' with index: '0' & is going to exit wihtout releasing, run file tc0_5.
+
+ Process 0 -  Press Control+C to Exit else wait 10 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 9 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 8 Seconds for program to exit.
+^C
+Cleaning up...
+
+
+
+___________________________________________
+
+aludra.usc.edu(11): nachos -x ../test/tc0_5 -m 5 -sc 1
+
+ Process 0 - TC0_5 :: Testing for p4p3.
+
+ Process 0 - TC0_5 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_5 :: Has acquired lock 'lock1' with index: '0'.
+
+ Process 0 - TC0_5 :: Has released lock 'lock1' with index: '0' & is now EXITING.
+Machine halting!
+
+
+//////////
+Test Case 2 - .c
+//////////
+
+___________________________________________
+
+aludra.usc.edu(8): nachos -m 0 -server3
+
+CreateLock- New Lock is created by the name 'lock1' at index 0 for machine: 1 box: 0
+
+Acquire- The Lock by name 'lock1' FOUND. The index being returned is '0 for machine: 1 box: 0
+
+Acquire- Lock: 'lock1' has been acquired for machine: 1 box: 0
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ User program having Lock Name: 'lock1'  alive, will ping again in 5 seconds.
+
+ Lock Name: 'lock1' has state busy. Pinging the user program that has acquired it.
+
+ The postOffice Send failed. Nachos instance has exited without releasing a lock.
+
+ pingFunction- Lock Name: 'lock1' has been released (status changed to free)
+ 
+
+___________________________________________
+ 
+ aludra.usc.edu(5): nachos -x ../test/tc0_1 -m 1 -sc 1
+
+ Process 0 - TC0_1 :: Testing for p4p3.
+
+ Process 0 - TC0_1 :: Lock name 'lock1' Created. The Index is '0'.
+
+ Process 0 - TC0_1 :: Has acquired lock 'lock1' with index: '0' & is going to exit wihtout releasing, run file tc0_2.
+
+ Process 0 -  Press Control+C to Exit else wait 10 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 9 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 8 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 7 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 6 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 5 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 4 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 3 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 2 Seconds for program to exit.
+
+ Process 0 -  Press Control+C to Exit else wait 1 Seconds for program to exit.
+Machine halting!
+ 
+
+...............................................................................................................................................
+VI. Discussion.
+...............................................................................................................................................
+
+-------------------------------
++ Experiment expectation. 
+-------------------------------
+
+Test cases generated.
+
+- Part 1 runs for minimum requirements of Movie Theater Simulation.
+- Part 1 runs with various values of rs with same rs in each nachos window for minimum requirements of Movie Theater Simulation.
+- Part 1 runs with various values of rs with different rs in each nachos window for minimum requirements of Movie Theater Simulation.
+
+- Part 2 runs for minimum requirements of Movie Theater Simulation.
+- Part 2 runs with various values of rs with same rs in each nachos window for minimum requirements of Movie Theater Simulation.
+- Part 2 run with various value of rs with different rs in each nachos window for minimum requirements of Movie Theater Simulation.
+- Part 2 run with various number of servers between 1 to 5 for minimum requirements of Movie Theater Simulation.
+
+- Part 3 (Extra Credit) runs with both cases, if there is a waiting member for a lock, then it gets lock assigned to it and if there is no waiting member, the lock is made free.
+
+-------------------------------
++Experiment Output:
+-------------------------------
+
+- The testcases when implemented, ran & generated expected outputs and hence proving the authentic implementation of the RPC calls.
+
+
+...............................................................................................................................................
+VII. Miscellaneous.
+...............................................................................................................................................
+
+We have put a time dealy of 5 seconds in the ping function so as not to confuse nachos. 
+ 
+Number of mailBoxes supported by nachos by default is 10. We have increased it to 100. The change is made in the Initialize() function in 
+/threads/system.cc
+
+Our program has been tested with for many values of rs . The program ran successfully without any deadlock. The output is also as expected.
+
+
+...............................................................................................................................................
+...............................................................................................................................................
